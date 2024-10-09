@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { 
+import { Button } from "../components/ui/button"
+import { Input } from "../components/ui/input"
+// ... other imports
 Dialog,
 DialogContent,
 DialogDescription,
