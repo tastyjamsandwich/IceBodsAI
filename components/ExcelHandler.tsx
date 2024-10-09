@@ -1,147 +1,145 @@
-import { useState } from 'react'
-import { Button } from "../components/ui/button"
-import { Input } from "../components/ui/input"
-// ... other imports
-Dialog,
-DialogContent,
-DialogDescription,
-DialogHeader,
-DialogTitle,
-DialogTrigger,
-} from "@/components/ui/dialog"
-import { Info } from 'lucide-react'
-import * as XLSX from 'xlsx'
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Snowflake, Wind, Zap, Star } from "lucide-react"
+import Image from "next/image"
 
-interface ExcelHandlerProps {
-onImport: (data: any[]) => void
-data: any[]
-}
-
-export function ExcelHandler({ onImport, data }: ExcelHandlerProps) {
-const [file, setFile] = useState<File | null>(null)
-
-const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  if (e.target.files) {
-    setFile(e.target.files[0])
-  }
-}
-
-const handleImport = () => {
-  if (file) {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const data = new Uint8Array(e.target?.result as ArrayBuffer)
-      const workbook = XLSX.read(data, { type: 'array' })
-      const sheetName = workbook.SheetNames[0]
-      const worksheet = workbook.Sheets[sheetName]
-      const json = XLSX.utils.sheet_to_json(worksheet)
-      onImport(json)
-    }
-    reader.readAsArrayBuffer(file)
-  }
-}
-
-const handleExport = () => {
-  const worksheet = XLSX.utils.json_to_sheet(data)
-  const workbook = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Products')
-  XLSX.writeFile(workbook, 'back_office_data.xlsx')
-}
-
-return (
-  <div className="flex flex-col space-y-4">
-    <div className="flex items-center space-x-2">
-      <Input type="file" accept=".xlsx, .xls" onChange={handleFileChange} />
-      <Button onClick={handleImport} disabled={!file}>Import</Button>
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button variant="outline" size="icon">
-            <Info className="h-4 w-4" />
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Excel Import Instructions</DialogTitle>
-            <DialogDescription>
-              <p>Your Excel file should include the following columns in this order:</p>
-              <table className="min-w-full bg-white border border-gray-300 mt-4">
-                <thead>
-                  <tr>
-                    <th className="border border-gray-300 px-4 py-2">Column</th>
-                    <th className="border border-gray-300 px-4 py-2">Description</th>
-                    <th className="border border-gray-300 px-4 py-2">Example</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td className="border border-gray-300 px-4 py-2">Name</td>
-                    <td className="border border-gray-300 px-4 py-2">Product name</td>
-                    <td className="border border-gray-300 px-4 py-2">Cryotherapy Chamber Pro</td>
-                  </tr>
-                  <tr>
-                    <td className="border border-gray-300 px-4 py-2">Description</td>
-                    <td className="border border-gray-300 px-4 py-2">Short product description</td>
-                    <td className="border border-gray-300 px-4 py-2">Advanced cryotherapy chamber for full-body treatment</td>
-                  </tr>
-                  <tr>
-                    <td className="border border-gray-300 px-4 py-2">Price</td>
-                    <td className="border border-gray-300 px-4 py-2">Product price (numeric)</td>
-                    <td className="border border-gray-300 px-4 py-2">5999.99</td>
-                  </tr>
-                  <tr>
-                    <td className="border border-gray-300 px-4 py-2">Rating</td>
-                    <td className="border border-gray-300 px-4 py-2">Product rating (1-5)</td>
-                    <td className="border border-gray-300 px-4 py-2">4</td>
-                  </tr>
-                  <tr>
-                    <td className="border border-gray-300 px-4 py-2">Category</td>
-                    <td className="border border-gray-300 px-4 py-2">Product category</td>
-                    <td className="border border-gray-300 px-4 py-2">cryotherapy</td>
-                  </tr>
-                  <tr>
-                    <td className="border border-gray-300 px-4 py-2">Tier</td>
-                    <td className="border border-gray-300 px-4 py-2">Product tier (basic, midtier, luxury)</td>
-                    <td className="border border-gray-300 px-4 py-2">luxury</td>
-                  </tr>
-                  <tr>
-                    <td className="border border-gray-300 px-4 py-2">Image URL</td>
-                    <td className="border border-gray-300 px-4 py-2">URL of the product image</td>
-                    <td className="border border-gray-300 px-4 py-2">https://example.com/images/cryo-chamber.jpg</td>
-                  </tr>
-                  <tr>
-                    <td className="border border-gray-300 px-4 py-2">Overview</td>
-                    <td className="border border-gray-300 px-4 py-2">Detailed product overview</td>
-                    <td className="border border-gray-300 px-4 py-2">State-of-the-art cryotherapy chamber designed for professional use...</td>
-                  </tr>
-                  <tr>
-                    <td className="border border-gray-300 px-4 py-2">Dimensions</td>
-                    <td className="border border-gray-300 px-4 py-2">Product dimensions</td>
-                    <td className="border border-gray-300 px-4 py-2">2.5m x 1.5m x 2.2m</td>
-                  </tr>
-                  <tr>
-                    <td className="border border-gray-300 px-4 py-2">Delivery Time</td>
-                    <td className="border border-gray-300 px-4 py-2">Estimated delivery time</td>
-                    <td className="border border-gray-300 px-4 py-2">2-3 weeks</td>
-                  </tr>
-                  <tr>
-                    <td className="border border-gray-300 px-4 py-2">Review</td>
-                    <td className="border border-gray-300 px-4 py-2">Product review or testimonial</td>
-                    <td className="border border-gray-300 px-4 py-2">This cryotherapy chamber has revolutionized our clinic's recovery treatments...</td>
-                  </tr>
-                  <tr>
-                    <td className="border border-gray-300 px-4 py-2">External URL (optional)</td>
-                    <td className="border border-gray-300 px-4 py-2">URL for external product page</td>
-                    <td className="border border-gray-300 px-4 py-2">https://external-store.com/cryo-chamber-pro</td>
-                  </tr>
-                </tbody>
-              </table>
-              <p className="mt-4">Ensure that the data types match the expected format for each field. The 'External URL' field is optional and can be left blank if not applicable.</p>
-            </DialogDescription>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
-    </div>
-    <Button onClick={handleExport}>Export to Excel</Button>
-  </div>
+const ProductCard = ({ name, image, rating, description, price }) => (
+  <Card className="w-full">
+    <CardContent className="p-4">
+      <Image src={image} alt={name} width={300} height={200} className="w-full h-48 object-cover rounded-md mb-4" />
+      <h3 className="font-bold text-lg mb-2">{name}</h3>
+      <div className="flex items-center mb-2">
+        {[...Array(5)].map((_, i) => (
+          <Star key={i} className={`w-4 h-4 ${i < rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`} />
+        ))}
+      </div>
+      <p className="text-sm text-gray-600 mb-2">{description}</p>
+      <div className="flex justify-between items-center">
+        <span className="font-bold text-lg">${price}</span>
+        <Button size="sm">Buy Now</Button>
+      </div>
+    </CardContent>
+  </Card>
 )
+
+const ProductSection = ({ title, icon: Icon, products }) => (
+  <Card className="mb-8">
+    <CardHeader>
+      <CardTitle className="flex items-center text-2xl">
+        <Icon className="mr-2 text-blue-500" />
+        {title}
+      </CardTitle>
+    </CardHeader>
+    <CardContent>
+      <Tabs defaultValue="basic">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="basic">Basic</TabsTrigger>
+          <TabsTrigger value="midtier">Mid Tier</TabsTrigger>
+          <TabsTrigger value="luxury">Luxury</TabsTrigger>
+        </TabsList>
+        {["basic", "midtier", "luxury"].map((tier) => (
+          <TabsContent key={tier} value={tier}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {products[tier].map((product, index) => (
+                <ProductCard key={index} {...product} />
+              ))}
+            </div>
+          </TabsContent>
+        ))}
+      </Tabs>
+    </CardContent>
+  </Card>
+)
+
+export default function Home() {
+  const products = {
+    cryotherapy: {
+      basic: [
+        { name: "Quick Freeze", image: "/placeholder.svg", rating: 4, description: "10-minute cryo session", price: 49.99 },
+        { name: "Cryo Starter", image: "/placeholder.svg", rating: 3, description: "Beginner-friendly package", price: 79.99 },
+      ],
+      midtier: [
+        { name: "Cryo Plus", image: "/placeholder.svg", rating: 4, description: "Enhanced cryo experience", price: 99.99 },
+        { name: "Freeze Deluxe", image: "/placeholder.svg", rating: 5, description: "Premium cryo treatment", price: 129.99 },
+      ],
+      luxury: [
+        { name: "Ice Royale", image: "/placeholder.svg", rating: 5, description: "VIP cryo experience", price: 199.99 },
+        { name: "Frost Elegance", image: "/placeholder.svg", rating: 5, description: "Luxe cryo package", price: 249.99 },
+      ],
+    },
+    coldTraining: {
+      basic: [
+        { name: "Cold 101", image: "/placeholder.svg", rating: 4, description: "Intro to cold exposure", price: 39.99 },
+        { name: "Chill Basics", image: "/placeholder.svg", rating: 3, description: "Foundational techniques", price: 59.99 },
+      ],
+      midtier: [
+        { name: "Frost Fighter", image: "/placeholder.svg", rating: 4, description: "Intermediate program", price: 89.99 },
+        { name: "Ice Warrior", image: "/placeholder.svg", rating: 5, description: "Advanced cold training", price: 119.99 },
+      ],
+      luxury: [
+        { name: "Polar Elite", image: "/placeholder.svg", rating: 5, description: "Expert-level training", price: 179.99 },
+        { name: "Arctic Master", image: "/placeholder.svg", rating: 5, description: "Ultimate cold mastery", price: 229.99 },
+      ],
+    },
+    iceBaths: {
+      basic: [
+        { name: "Quick Dip", image: "/placeholder.svg", rating: 4, description: "5-minute ice bath", price: 29.99 },
+        { name: "Chill Splash", image: "/placeholder.svg", rating: 3, description: "Beginner ice bath pack", price: 49.99 },
+      ],
+      midtier: [
+        { name: "Frost Immersion", image: "/placeholder.svg", rating: 4, description: "Extended ice bath", price: 79.99 },
+        { name: "Ice Plunge Pro", image: "/placeholder.svg", rating: 5, description: "Advanced ice therapy", price: 99.99 },
+      ],
+      luxury: [
+        { name: "Glacial Retreat", image: "/placeholder.svg", rating: 5, description: "Premium ice bath exp", price: 149.99 },
+        { name: "Arctic Oasis", image: "/placeholder.svg", rating: 5, description: "Luxurious ice therapy", price: 199.99 },
+      ],
+    },
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-blue-100 to-white">
+      <header className="p-4 flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-blue-600">IceBods</h1>
+        <nav>
+          <ul className="flex space-x-4">
+            <li><a href="#" className="text-blue-600 hover:text-blue-800">Offers</a></li>
+            <li><a href="#" className="text-blue-600 hover:text-blue-800">About</a></li>
+            <li><a href="#" className="text-blue-600 hover:text-blue-800">Contact</a></li>
+          </ul>
+        </nav>
+      </header>
+
+      <main className="container mx-auto px-4">
+        <section className="py-20 text-center">
+          <h2 className="text-5xl font-bold text-blue-800 mb-4">Embrace the Cold, Ignite Your Fitness</h2>
+          <p className="text-xl text-blue-600 mb-8">Discover the power of cold therapy for your body and mind</p>
+          <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white">
+            Get Started
+          </Button>
+        </section>
+
+        <section className="py-20">
+          <ProductSection title="Cryotherapy" icon={Snowflake} products={products.cryotherapy} />
+          <ProductSection title="Cold Training" icon={Wind} products={products.coldTraining} />
+          <ProductSection title="Ice Baths" icon={Zap} products={products.iceBaths} />
+        </section>
+
+        <section className="py-20 text-center">
+          <h2 className="text-4xl font-bold text-blue-800 mb-4">Ready to Cool Down and Power Up?</h2>
+          <p className="text-xl text-blue-600 mb-8">Join IceBods today and transform your fitness journey</p>
+          <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white">
+            Sign Up Now
+          </Button>
+        </section>
+      </main>
+
+      <footer className="bg-blue-800 text-white py-8">
+        <div className="container mx-auto px-4 text-center">
+          <p>&copy; 2023 IceBods. All rights reserved.</p>
+        </div>
+      </footer>
+    </div>
+  )
 }
