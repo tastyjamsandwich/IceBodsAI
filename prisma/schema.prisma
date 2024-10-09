@@ -1,0 +1,35 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  price       Float
+  rating      Int
+  category    String
+  tier        String
+  image       String?
+  info        Json
+  review      String?
+  externalUrl String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PricingRange {
+  id         String @id @default(cuid())
+  category   String
+  basicMin   Float
+  basicMax   Float
+  midTierMin Float
+  midTierMax Float
+  luxuryMin  Float
+  luxuryMax  Float
+}
