@@ -21,25 +21,19 @@ function generateRandomProduct() {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  console.log('API route called:', req.method)
   if (req.method === 'POST') {
     try {
-      console.log('Generating products...')
       const count = parseInt(req.body.count) || 10 // Default to 10 if not specified
-      console.log('Products to generate:', count)
 
       const products = []
       for (let i = 0; i < count; i++) {
         const product = generateRandomProduct()
-        console.log('Generated product:', product)
         const createdProduct = await prisma.product.create({
           data: product,
         })
-        console.log('Created product:', createdProduct)
         products.push(createdProduct)
       }
 
-      console.log(`${count} products generated successfully`)
       res.status(200).json({ message: `${count} products generated successfully`, products })
     } catch (error) {
       console.error('Error generating products:', error)
@@ -48,7 +42,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       await prisma.$disconnect()
     }
   } else {
-    console.log('Method not allowed:', req.method)
     res.setHeader('Allow', ['POST'])
     res.status(405).end(`Method ${req.method} Not Allowed`)
   }
