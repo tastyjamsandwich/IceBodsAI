@@ -16,7 +16,7 @@ interface ExcelHandlerProps {
   data: any[]
 }
 
-export const ExcelHandler: React.FC<ExcelHandlerProps> = ({ onImport, data }) => {
+export default function ExcelHandler({ onImport, data }: ExcelHandlerProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
