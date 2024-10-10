@@ -1,147 +1,139 @@
 import { useState } from 'react'
-import { Button } from "../ui/button"
-import { Input } from "../ui/input"
-import { 
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "../ui/dialog"
-import { Info } from 'lucide-react'
-import * as XLSX from 'xlsx'
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { ExcelHandler } from '@/components/ExcelHandler'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
 
-interface ExcelHandlerProps {
-  onImport: (data: any[]) => void
-  data: any[]
+interface Product {
+  id: string
+  name: string
+  description: string
+  price: number
+  category: string
+  tier: string
 }
 
-export function ExcelHandler({ onImport, data }: ExcelHandlerProps) {
-  const [file, setFile] = useState<File | null>(null)
+export default function BackOffice() {
+  const [products, setProducts] = useState<Product[]>([])
+  const [searchTerm, setSearchTerm] = useState('')
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null)
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFile(e.target.files[0])
-    }
+  const handleImport = (data: any[]) => {
+    const formattedData = data.map((item, index) => ({
+      id: item.id || `temp-id-${index}`,
+      name: item.name || '',
+      description: item.description || '',
+      price: parseFloat(item.price) || 0,
+      category: item.category || '',
+      tier: item.tier || '',
+    }))
+    setProducts(formattedData)
   }
 
-  const handleImport = () => {
-    if (file) {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer)
-        const workbook = XLSX.read(data, { type: 'array' })
-        const sheetName = workbook.SheetNames[0]
-        const worksheet = workbook.Sheets[sheetName]
-        const json = XLSX.utils.sheet_to_json(worksheet)
-        onImport(json)
-      }
-      reader.readAsArrayBuffer(file)
-    }
+  const handleEdit = (product: Product) => {
+    setEditingProduct(product)
   }
 
-  const handleExport = () => {
-    const worksheet = XLSX.utils.json_to_sheet(data)
-    const workbook = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Products')
-    XLSX.writeFile(workbook, 'back_office_data.xlsx')
+  const handleSave = (updatedProduct: Product) => {
+    setProducts(products.map(p => p.id === updatedProduct.id ? updatedProduct : p))
+    setEditingProduct(null)
   }
+
+  const handleDelete = (id: string) => {
+    setProducts(products.filter(p => p.id !== id))
+  }
+
+  const filteredProducts = products.filter(product =>
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.description.toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
   return (
-    <div className="flex flex-col space-y-4">
-      <div className="flex items-center space-x-2">
-        <Input type="file" accept=".xlsx, .xls" onChange={handleFileChange} />
-        <Button onClick={handleImport} disabled={!file}>Import</Button>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="icon">
-              <Info className="h-4 w-4" />
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-3xl">
-            <DialogHeader>
-              <DialogTitle>Excel Import Instructions</DialogTitle>
-              <DialogDescription>
-                <p>Your Excel file should include the following columns in this order:</p>
-                <table className="min-w-full bg-white border border-gray-300 mt-4">
-                  <thead>
-                    <tr>
-                      <th className="border border-gray-300 px-4 py-2">Column</th>
-                      <th className="border border-gray-300 px-4 py-2">Description</th>
-                      <th className="border border-gray-300 px-4 py-2">Example</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td className="border border-gray-300 px-4 py-2">Name</td>
-                      <td className="border border-gray-300 px-4 py-2">Product name</td>
-                      <td className="border border-gray-300 px-4 py-2">Cryotherapy Chamber Pro</td>
-                    </tr>
-                    <tr>
-                      <td className="border border-gray-300 px-4 py-2">Description</td>
-                      <td className="border border-gray-300 px-4 py-2">Short product description</td>
-                      <td className="border border-gray-300 px-4 py-2">Advanced cryotherapy chamber for full-body treatment</td>
-                    </tr>
-                    <tr>
-                      <td className="border border-gray-300 px-4 py-2">Price</td>
-                      <td className="border border-gray-300 px-4 py-2">Product price (numeric)</td>
-                      <td className="border border-gray-300 px-4 py-2">5999.99</td>
-                    </tr>
-                    <tr>
-                      <td className="border border-gray-300 px-4 py-2">Rating</td>
-                      <td className="border border-gray-300 px-4 py-2">Product rating (1-5)</td>
-                      <td className="border border-gray-300 px-4 py-2">4</td>
-                    </tr>
-                    <tr>
-                      <td className="border border-gray-300 px-4 py-2">Category</td>
-                      <td className="border border-gray-300 px-4 py-2">Product category</td>
-                      <td className="border border-gray-300 px-4 py-2">cryotherapy</td>
-                    </tr>
-                    <tr>
-                      <td className="border border-gray-300 px-4 py-2">Tier</td>
-                      <td className="border border-gray-300 px-4 py-2">Product tier (basic, midtier, luxury)</td>
-                      <td className="border border-gray-300 px-4 py-2">luxury</td>
-                    </tr>
-                    <tr>
-                      <td className="border border-gray-300 px-4 py-2">Image URL</td>
-                      <td className="border border-gray-300 px-4 py-2">URL of the product image</td>
-                      <td className="border border-gray-300 px-4 py-2">https://example.com/images/cryo-chamber.jpg</td>
-                    </tr>
-                    <tr>
-                      <td className="border border-gray-300 px-4 py-2">Overview</td>
-                      <td className="border border-gray-300 px-4 py-2">Detailed product overview</td>
-                      <td className="border border-gray-300 px-4 py-2">State-of-the-art cryotherapy chamber designed for professional use...</td>
-                    </tr>
-                    <tr>
-                      <td className="border border-gray-300 px-4 py-2">Dimensions</td>
-                      <td className="border border-gray-300 px-4 py-2">Product dimensions</td>
-                      <td className="border border-gray-300 px-4 py-2">2.5m x 1.5m x 2.2m</td>
-                    </tr>
-                    <tr>
-                      <td className="border border-gray-300 px-4 py-2">Delivery Time</td>
-                      <td className="border border-gray-300 px-4 py-2">Estimated delivery time</td>
-                      <td className="border border-gray-300 px-4 py-2">2-3 weeks</td>
-                    </tr>
-                    <tr>
-                      <td className="border border-gray-300 px-4 py-2">Review</td>
-                      <td className="border border-gray-300 px-4 py-2">Product review or testimonial</td>
-                      <td className="border border-gray-300 px-4 py-2">This cryotherapy chamber has revolutionized our clinic's recovery treatments...</td>
-                    </tr>
-                    <tr>
-                      <td className="border border-gray-300 px-4 py-2">External URL (optional)</td>
-                      <td className="border border-gray-300 px-4 py-2">URL for external product page</td>
-                      <td className="border border-gray-300 px-4 py-2">https://external-store.com/cryo-chamber-pro</td>
-                    </tr>
-                  </tbody>
-                </table>
-                <p className="mt-4">Ensure that the data types match the expected format for each field. The 'External URL' field is optional and can be left blank if not applicable.</p>
-              </DialogDescription>
-            </DialogHeader>
-          </DialogContent>
-        </Dialog>
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">IceBods Back Office</h1>
+      
+      <div className="mb-4">
+        <ExcelHandler onImport={handleImport} data={products} />
       </div>
-      <Button onClick={handleExport}>Export to Excel</Button>
+
+      <div className="mb-4">
+        <Input
+          type="text"
+          placeholder="Search products..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="max-w-sm"
+        />
+      </div>
+
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Description</TableHead>
+            <TableHead>Price</TableHead>
+            <TableHead>Category</TableHead>
+            <TableHead>Tier</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filteredProducts.map((product) => (
+            <TableRow key={product.id}>
+              <TableCell>{product.name}</TableCell>
+              <TableCell>{product.description}</TableCell>
+              <TableCell>${product.price.toFixed(2)}</TableCell>
+              <TableCell>{product.category}</TableCell>
+              <TableCell>{product.tier}</TableCell>
+              <TableCell>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="mr-2" onClick={() => handleEdit(product)}>Edit</Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Edit Product</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={(e) => {
+                      e.preventDefault()
+                      if (editingProduct) handleSave(editingProduct)
+                    }}>
+                      <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label htmlFor="name" className="text-right">Name</Label>
+                          <Input id="name" value={editingProduct?.name} onChange={(e) => setEditingProduct(prev => prev ? {...prev, name: e.target.value} : null)} className="col-span-3" />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label htmlFor="description" className="text-right">Description</Label>
+                          <Input id="description" value={editingProduct?.description} onChange={(e) => setEditingProduct(prev => prev ? {...prev, description: e.target.value} : null)} className="col-span-3" />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label htmlFor="price" className="text-right">Price</Label>
+                          <Input id="price" type="number" value={editingProduct?.price} onChange={(e) => setEditingProduct(prev => prev ? {...prev, price: parseFloat(e.target.value)} : null)} className="col-span-3" />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label htmlFor="category" className="text-right">Category</Label>
+                          <Input id="category" value={editingProduct?.category} onChange={(e) => setEditingProduct(prev => prev ? {...prev, category: e.target.value} : null)} className="col-span-3" />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label htmlFor="tier" className="text-right">Tier</Label>
+                          <Input id="tier" value={editingProduct?.tier} onChange={(e) => setEditingProduct(prev => prev ? {...prev, tier: e.target.value} : null)} className="col-span-3" />
+                        </div>
+                      </div>
+                      <div className="flex justify-end">
+                        <Button type="submit">Save changes</Button>
+                      </div>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+                <Button variant="destructive" size="sm" onClick={() => handleDelete(product.id)}>Delete</Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   )
 }
