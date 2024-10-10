@@ -1,9 +1,10 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { 
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -25,6 +26,7 @@ export default function BackOffice() {
   const [products, setProducts] = useState<Product[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   const handleImport = (data: any[]) => {
     const formattedData = data.map((item, index) => ({
@@ -40,11 +42,13 @@ export default function BackOffice() {
 
   const handleEdit = (product: Product) => {
     setEditingProduct(product)
+    setIsDialogOpen(true)
   }
 
   const handleSave = (updatedProduct: Product) => {
     setProducts(products.map(p => p.id === updatedProduct.id ? updatedProduct : p))
     setEditingProduct(null)
+    setIsDialogOpen(false)
   }
 
   const handleDelete = (id: string) => {
@@ -94,7 +98,7 @@ export default function BackOffice() {
               <TableCell>{product.category}</TableCell>
               <TableCell>{product.tier}</TableCell>
               <TableCell>
-                <Dialog>
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                   <DialogTrigger asChild>
                     <Button variant="outline" size="sm" className="mr-2" onClick={() => handleEdit(product)}>Edit</Button>
                   </DialogTrigger>
