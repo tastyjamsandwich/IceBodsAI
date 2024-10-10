@@ -2,7 +2,13 @@ import * as React from "react"
 import { X } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-const Dialog = ({ children, open, onOpenChange }: { children: React.ReactNode, open: boolean, onOpenChange: (open: boolean) => void }) => {
+interface DialogProps {
+  children: React.ReactNode
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}
+
+const Dialog: React.FC<DialogProps> = ({ children, open, onOpenChange }) => {
   if (!open) return null
 
   return (
@@ -15,8 +21,13 @@ const Dialog = ({ children, open, onOpenChange }: { children: React.ReactNode, o
   )
 }
 
-const DialogTrigger = ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
-  <button {...props}>{children}</button>
+interface DialogTriggerProps {
+  onClick: () => void
+  children: React.ReactNode
+}
+
+const DialogTrigger: React.FC<DialogTriggerProps> = ({ onClick, children }) => (
+  <div onClick={onClick}>{children}</div>
 )
 
 const DialogContent = ({ children, className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
