@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([])
-  const [isGenerating, setIsGenerating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     fetchProducts()
@@ -20,11 +20,11 @@ export default function Home() {
       setProducts(data)
     } catch (error) {
       console.error('Error fetching products:', error)
+      setError('Failed to fetch products. Please try again.')
     }
   }
 
   const generateProducts = async () => {
-    setIsGenerating(true)
     try {
       const response = await fetch('/api/generate-products', {
         method: 'POST',
@@ -38,25 +38,18 @@ export default function Home() {
       }
       const data = await response.json()
       console.log(data.message)
-      // Fetch products again to update the list
-      await fetchProducts()
+      fetchProducts() // Refresh the product list
     } catch (error) {
       console.error('Error generating products:', error)
-    } finally {
-      setIsGenerating(false)
+      setError('Failed to generate products. Please try again.')
     }
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-4xl font-bold mb-8">IceBods Products</h1>
-      <Button
-        onClick={generateProducts}
-        disabled={isGenerating}
-        className="mb-4"
-      >
-        {isGenerating ? 'Generating...' : 'Generate Random Products'}
-      </Button>
+      <Button onClick={generateProducts} className="mb-4">Generate Random Products</Button>
+      {error && <p className="text-red-500 mb-4">{error}</p>}
       {products.length === 0 ? (
         <p>No products available. Generate some products to get started!</p>
       ) : (
