@@ -79,7 +79,7 @@ export const ExcelHandler: React.FC<ExcelHandlerProps> = ({ onImport, data }) =>
       />
       <Button onClick={handleExport} disabled={data.length === 0}>Export</Button>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogTrigger asChild>
+        <DialogTrigger>
           <Button variant="outline" size="icon">
             <Info className="h-4 w-4" />
           </Button>
