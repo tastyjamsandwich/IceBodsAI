@@ -1,43 +1,68 @@
-import { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { 
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Label } from "@/components/ui/label"
-import { ExcelHandler } from '@/components/ExcelHandler'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface Product {
   id: string
   name: string
   description: string
   price: number
-  category: string
   tier: string
 }
 
 export default function BackOffice() {
   const [products, setProducts] = useState<Product[]>([])
-  const [searchTerm, setSearchTerm] = useState('')
+  const [newProduct, setNewProduct] = useState<Partial<Product>>({})
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
-  const handleImport = (data: any[]) => {
-    const formattedData = data.map((item, index) => ({
-      id: item.id || `temp-id-${index}`,
-      name: item.name || '',
-      description: item.description || '',
-      price: parseFloat(item.price) || 0,
-      category: item.category || '',
-      tier: item.tier || '',
-    }))
-    setProducts(formattedData)
+  useEffect(() => {
+    // Fetch products from your API
+    fetchProducts()
+  }, [])
+
+  const fetchProducts = async () => {
+    // Replace with your actual API call
+    const response = await fetch('/api/products')
+    const data = await response.json()
+    setProducts(data)
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    if (editingProduct) {
+      setEditingProduct({ ...editingProduct, [name]: value })
+    } else {
+      setNewProduct({ ...newProduct, [name]: value })
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (editingProduct) {
+      // Update existing product
+      await fetch(`/api/products/${editingProduct.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editingProduct),
+      })
+    } else {
+      // Create new product
+      await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newProduct),
+      })
+    }
+    setIsDialogOpen(false)
+    setEditingProduct(null)
+    setNewProduct({})
+    fetchProducts()
   }
 
   const handleEdit = (product: Product) => {
@@ -45,105 +70,206 @@ export default function BackOffice() {
     setIsDialogOpen(true)
   }
 
-  const handleSave = (updatedProduct: Product) => {
-    setProducts(products.map(p => p.id === updatedProduct.id ? updatedProduct : p))
-    setEditingProduct(null)
-    setIsDialogOpen(false)
+  const handleDelete = async (id: string) => {
+    await fetch(`/api/products/${id}`, { method: 'DELETE' })
+    fetchProducts()
   }
-
-  const handleDelete = (id: string) => {
-    setProducts(products.filter(p => p.id !== id))
-  }
-
-  const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.description.toLowerCase().includes(searchTerm.toLowerCase())
-  )
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">IceBods Back Office</h1>
-      
-      <div className="mb-4">
-        <ExcelHandler onImport={handleImport} data={products} />
-      </div>
-
-      <div className="mb-4">
-        <Input
-          type="text"
-          placeholder="Search products..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm"
-        />
-      </div>
-
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Description</TableHead>
-            <TableHead>Price</TableHead>
-            <TableHead>Category</TableHead>
-            <TableHead>Tier</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredProducts.map((product) => (
-            <TableRow key={product.id}>
-              <TableCell>{product.name}</TableCell>
-              <TableCell>{product.description}</TableCell>
-              <TableCell>${product.price.toFixed(2)}</TableCell>
-              <TableCell>{product.category}</TableCell>
-              <TableCell>{product.tier}</TableCell>
-              <TableCell>
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="sm" className="mr-2" onClick={() => handleEdit(product)}>Edit</Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Edit Product</DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={(e) => {
-                      e.preventDefault()
-                      if (editingProduct) handleSave(editingProduct)
-                    }}>
-                      <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="name" className="text-right">Name</Label>
-                          <Input id="name" value={editingProduct?.name} onChange={(e) => setEditingProduct(prev => prev ? {...prev, name: e.target.value} : null)} className="col-span-3" />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="description" className="text-right">Description</Label>
-                          <Input id="description" value={editingProduct?.description} onChange={(e) => setEditingProduct(prev => prev ? {...prev, description: e.target.value} : null)} className="col-span-3" />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="price" className="text-right">Price</Label>
-                          <Input id="price" type="number" value={editingProduct?.price} onChange={(e) => setEditingProduct(prev => prev ? {...prev, price: parseFloat(e.target.value)} : null)} className="col-span-3" />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="category" className="text-right">Category</Label>
-                          <Input id="category" value={editingProduct?.category} onChange={(e) => setEditingProduct(prev => prev ? {...prev, category: e.target.value} : null)} className="col-span-3" />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="tier" className="text-right">Tier</Label>
-                          <Input id="tier" value={editingProduct?.tier} onChange={(e) => setEditingProduct(prev => prev ? {...prev, tier: e.target.value} : null)} className="col-span-3" />
-                        </div>
+      <h1 className="text-2xl font-bold mb-4">Back Office</h1>
+      <Tabs defaultValue="products" className="w-full">
+        <TabsList>
+          <TabsTrigger value="products">Products</TabsTrigger>
+          <TabsTrigger value="orders">Orders</TabsTrigger>
+        </TabsList>
+        <TabsContent value="products">
+          <Card>
+            <CardHeader>
+              <CardTitle>Products</CardTitle>
+              <CardDescription>Manage your product catalog</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>Tier</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {products.map((product) => (
+                    <TableRow key={product.id}>
+                      <TableCell>{product.name}</TableCell>
+                      <TableCell>{product.description}</TableCell>
+                      <TableCell>${product.price.toFixed(2)}</TableCell>
+                      <TableCell>{product.tier}</TableCell>
+                      <TableCell>
+                        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="mr-2" onClick={() => handleEdit(product)}>
+                              Edit
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>{editingProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
+                              <DialogDescription>
+                                {editingProduct ? 'Make changes to the product here.' : 'Add a new product to your catalog.'}
+                              </DialogDescription>
+                            </DialogHeader>
+                            <form onSubmit={handleSubmit}>
+                              <div className="grid gap-4 py-4">
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                  <Label htmlFor="name" className="text-right">
+                                    Name
+                                  </Label>
+                                  <Input
+                                    id="name"
+                                    name="name"
+                                    value={editingProduct?.name || newProduct.name || ''}
+                                    onChange={handleInputChange}
+                                    className="col-span-3"
+                                  />
+                                </div>
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                  <Label htmlFor="description" className="text-right">
+                                    Description
+                                  </Label>
+                                  <Input
+                                    id="description"
+                                    name="description"
+                                    value={editingProduct?.description || newProduct.description || ''}
+                                    onChange={handleInputChange}
+                                    className="col-span-3"
+                                  />
+                                </div>
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                  <Label htmlFor="price" className="text-right">
+                                    Price
+                                  </Label>
+                                  <Input
+                                    id="price"
+                                    name="price"
+                                    type="number"
+                                    value={editingProduct?.price || newProduct.price || ''}
+                                    onChange={handleInputChange}
+                                    className="col-span-3"
+                                  />
+                                </div>
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                  <Label htmlFor="tier" className="text-right">
+                                    Tier
+                                  </Label>
+                                  <Input
+                                    id="tier"
+                                    name="tier"
+                                    value={editingProduct?.tier || newProduct.tier || ''}
+                                    onChange={handleInputChange}
+                                    className="col-span-3"
+                                  />
+                                </div>
+                              </div>
+                              <DialogFooter>
+                                <Button type="submit">{editingProduct ? 'Update' : 'Add'} Product</Button>
+                              </DialogFooter>
+                            </form>
+                          </DialogContent>
+                        </Dialog>
+                        <Button variant="destructive" size="sm" onClick={() => handleDelete(product.id)}>Delete</Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+            <CardFooter>
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button onClick={() => { setEditingProduct(null); setNewProduct({}); }}>Add New Product</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add New Product</DialogTitle>
+                    <DialogDescription>Add a new product to your catalog.</DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleSubmit}>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="name" className="text-right">
+                          Name
+                        </Label>
+                        <Input
+                          id="name"
+                          name="name"
+                          value={newProduct.name || ''}
+                          onChange={handleInputChange}
+                          className="col-span-3"
+                        />
                       </div>
-                      <div className="flex justify-end">
-                        <Button type="submit">Save changes</Button>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="description" className="text-right">
+                          Description
+                        </Label>
+                        <Input
+                          id="description"
+                          name="description"
+                          value={newProduct.description || ''}
+                          onChange={handleInputChange}
+                          className="col-span-3"
+                        />
                       </div>
-                    </form>
-                  </DialogContent>
-                </Dialog>
-                <Button variant="destructive" size="sm" onClick={() => handleDelete(product.id)}>Delete</Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="price" className="text-right">
+                          Price
+                        </Label>
+                        <Input
+                          id="price"
+                          name="price"
+                          type="number"
+                          value={newProduct.price || ''}
+                          onChange={handleInputChange}
+                          className="col-span-3"
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="tier" className="text-right">
+                          Tier
+                        </Label>
+                        <Input
+                          id="tier"
+                          name="tier"
+                          value={newProduct.tier || ''}
+                          onChange={handleInputChange}
+                          className="col-span-3"
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button type="submit">Add Product</Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+        <TabsContent value="orders">
+          <Card>
+            <CardHeader>
+              <CardTitle>Orders</CardTitle>
+              <CardDescription>View and manage customer orders</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* Add order management UI here */}
+              <p>Order management functionality coming soon...</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
