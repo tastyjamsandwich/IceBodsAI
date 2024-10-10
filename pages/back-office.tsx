@@ -30,12 +30,10 @@ export default function BackOffice() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   useEffect(() => {
-    // Fetch products from your API
     fetchProducts()
   }, [])
 
   const fetchProducts = async () => {
-    // Replace with your actual API call
     const response = await fetch('/api/products')
     const data = await response.json()
     setProducts(data)
@@ -53,14 +51,12 @@ export default function BackOffice() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (editingProduct) {
-      // Update existing product
       await fetch(`/api/products/${editingProduct.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editingProduct),
       })
     } else {
-      // Create new product
       await fetch('/api/products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -83,6 +79,21 @@ export default function BackOffice() {
     fetchProducts()
   }
 
+  const handleGenerateProducts = async () => {
+    try {
+      const response = await fetch('/api/generate-products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ count: 10 }), // Generate 10 products
+      })
+      const data = await response.json()
+      console.log(data.message)
+      fetchProducts() // Refresh the product list
+    } catch (error) {
+      console.error('Error generating products:', error)
+    }
+  }
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Back Office</h1>
@@ -98,6 +109,7 @@ export default function BackOffice() {
               <CardDescription>Manage your product catalog</CardDescription>
             </CardHeader>
             <CardContent>
+              <Button onClick={handleGenerateProducts} className="mb-4">Generate Random Products</Button>
               <Table>
                 <TableHeader>
                   <TableRow>
