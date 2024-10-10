@@ -15,7 +15,10 @@ model Product {
   name        String
   description String
   price       Float
+  rating      Int
+  category    String
   tier        String
+  image       String?
   createdAt   DateTime @default(now()) @db.Timestamptz(6)
   updatedAt   DateTime @default(now()) @updatedAt @db.Timestamptz(6)
 }
