@@ -9,35 +9,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const products = await prisma.product.findMany({
-      where: {
-        externalUrl: {
-          not: null
-        }
-      }
-    })
+    // Fetch all products
+    const products = await prisma.product.findMany()
 
+    // Update prices (this is a simplified example)
     for (const product of products) {
-      if (product.externalUrl) {
-        const response = await fetch(product.externalUrl)
-        const data = await response.text()
-        
-        // Simple regex to find a price in the format $XX.XX
-        const priceMatch = data.match(/\$(\d+\.\d{2})/)
-        
-        if (priceMatch && priceMatch[1]) {
-          const price = parseFloat(priceMatch[1])
-          await prisma.product.update({
-            where: { id: product.id },
-            data: { price: price }
-          })
-        }
-      }
+      const newPrice = product.price * 1.1 // Increase price by 10%
+      await prisma.product.update({
+        where: { id: product.id },
+        data: { price: newPrice },
+      })
     }
 
     res.status(200).json({ message: 'Prices updated successfully' })
   } catch (error) {
     console.error('Error updating prices:', error)
-    res.status(500).json({ message: 'Error updating prices' })
+    res.status(500).json({ message: 'Error updating prices', error: (error as Error).message })
+  } finally {
+    await prisma.$disconnect()
   }
 }
