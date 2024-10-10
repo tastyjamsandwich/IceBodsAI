@@ -1,31 +1,64 @@
 import { useState, useEffect } from 'react'
 import { Product } from '@prisma/client'
+import { Button } from "@/components/ui/button"
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([])
+  const [isGenerating, setIsGenerating] = useState(false)
 
   useEffect(() => {
-    async function fetchProducts() {
-      try {
-        const response = await fetch('/api/products')
-        if (!response.ok) {
-          throw new Error('Failed to fetch products')
-        }
-        const data = await response.json()
-        setProducts(data)
-      } catch (error) {
-        console.error('Error fetching products:', error)
-      }
-    }
-
     fetchProducts()
   }, [])
+
+  const fetchProducts = async () => {
+    try {
+      const response = await fetch('/api/products')
+      if (!response.ok) {
+        throw new Error('Failed to fetch products')
+      }
+      const data = await response.json()
+      setProducts(data)
+    } catch (error) {
+      console.error('Error fetching products:', error)
+    }
+  }
+
+  const generateProducts = async () => {
+    setIsGenerating(true)
+    try {
+      const response = await fetch('/api/generate-products', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ count: 10 }), // Generate 10 products
+      })
+      if (!response.ok) {
+        throw new Error('Failed to generate products')
+      }
+      const data = await response.json()
+      console.log(data.message)
+      // Fetch products again to update the list
+      await fetchProducts()
+    } catch (error) {
+      console.error('Error generating products:', error)
+    } finally {
+      setIsGenerating(false)
+    }
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-4xl font-bold mb-8">IceBods Products</h1>
+      <Button
+        onClick={generateProducts}
+        disabled={isGenerating}
+        className="mb-4"
+      >
+        {isGenerating ? 'Generating...' : 'Generate Random Products'}
+      </Button>
       {products.length === 0 ? (
-        <p>Loading products...</p>
+        <p>No products available. Generate some products to get started!</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {products.map((product) => (
@@ -36,6 +69,9 @@ export default function Home() {
               <p className="text-sm text-gray-500">Category: {product.category}</p>
               <p className="text-sm text-gray-500">Tier: {product.tier}</p>
               <p className="text-sm text-gray-500">Rating: {product.rating}/5</p>
+              {product.image && (
+                <img src={product.image} alt={product.name} className="mt-2 w-full h-40 object-cover rounded" />
+              )}
             </div>
           ))}
         </div>
