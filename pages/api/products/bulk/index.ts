@@ -18,6 +18,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       const products: ProductInput[] = req.body.products
 
+      if (!Array.isArray(products) || products.length === 0) {
+        return res.status(400).json({ message: 'Invalid or empty product data' })
+      }
+
       const createdProducts = await prisma.product.createMany({
         data: products.map((product) => ({
           name: product.name,
@@ -32,7 +36,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       res.status(200).json({ message: 'Products created successfully', count: createdProducts.count })
     } catch (error) {
+      console.error('Error creating products:', error)
       res.status(500).json({ message: 'Error creating products', error: (error as Error).message })
+    } finally {
+      await prisma.$disconnect()
     }
   } else {
     res.setHeader('Allow', ['POST'])
