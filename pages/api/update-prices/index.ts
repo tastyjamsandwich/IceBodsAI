@@ -1,6 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 import { PrismaClient } from '@prisma/client'
-import cheerio from 'cheerio'
 
 const prisma = new PrismaClient()
 
@@ -22,13 +21,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (product.externalUrl) {
         const response = await fetch(product.externalUrl)
         const data = await response.text()
-        const $ = cheerio.load(data)
-        const price = $('span.price').text().trim().replace('$', '')
-
-        if (price) {
+        
+        // Simple regex to find a price in the format $XX.XX
+        const priceMatch = data.match(/\$(\d+\.\d{2})/)
+        
+        if (priceMatch && priceMatch[1]) {
+          const price = parseFloat(priceMatch[1])
           await prisma.product.update({
             where: { id: product.id },
-            data: { price: parseFloat(price) }
+            data: { price: price }
           })
         }
       }
