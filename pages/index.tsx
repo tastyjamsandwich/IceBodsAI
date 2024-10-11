@@ -68,17 +68,27 @@ export default function Home() {
 
   const tiers = ['Basic', 'Premium', 'Luxury']
 
-  if (isLoading) return <div>Loading...</div>
-  if (error) return <div>{error}</div>
+  if (isLoading) return <div className="flex justify-center items-center h-screen">Loading...</div>
+  if (error) return <div className="flex justify-center items-center h-screen text-red-500">{error}</div>
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Ice Bods Product Showcase</h1>
-      <Button onClick={generateProducts} className="mb-4">Generate Products</Button>
-      <Tabs defaultValue="Basic">
+    <div className="container mx-auto px-4 py-8 bg-background text-foreground">
+      <h1 className="text-4xl font-bold mb-6 text-center text-primary">Ice Bods Product Showcase</h1>
+      <div className="flex justify-center mb-8">
+        <Button onClick={generateProducts} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+          Generate Products
+        </Button>
+      </div>
+      <Tabs defaultValue="Basic" className="w-full">
         <TabsList className="grid w-full grid-cols-3 mb-8">
           {tiers.map((tier) => (
-            <TabsTrigger key={tier} value={tier}>{tier}</TabsTrigger>
+            <TabsTrigger 
+              key={tier} 
+              value={tier}
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              {tier}
+            </TabsTrigger>
           ))}
         </TabsList>
         {tiers.map((tier) => (
