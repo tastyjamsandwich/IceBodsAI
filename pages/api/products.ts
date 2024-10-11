@@ -9,12 +9,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const products = await prisma.product.findMany()
       res.status(200).json(products)
     } catch (error) {
-      res.status(500).json({ message: 'Error fetching products', error: (error as Error).message })
-    } finally {
-      await prisma.$disconnect()
+      console.error('Error fetching products:', error)
+      res.status(500).json({ error: 'Failed to fetch products' })
+    }
+  } else if (req.method === 'POST') {
+    try {
+      const product = await prisma.product.create({
+        data: req.body,
+      })
+      res.status(201).json(product)
+    } catch (error) {
+      console.error('Error creating product:', error)
+      res.status(500).json({ error: 'Failed to create product' })
     }
   } else {
-    res.setHeader('Allow', ['GET'])
+    res.setHeader('Allow', ['GET', 'POST'])
     res.status(405).end(`Method ${req.method} Not Allowed`)
   }
 }
