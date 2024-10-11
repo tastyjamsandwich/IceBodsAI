@@ -8,7 +8,7 @@ generator client {
 }
 
 model Product {
-  id             String   @id @default(uuid())
+  id             String  @id @default(uuid())
   name           String
   description    String
   price          Float
@@ -16,6 +16,6 @@ model Product {
   category       String
   tier           String
   image          String
-  additionalInfo String
-  review         String
+  additionalInfo String? // Make this optional
+  review         String? // Make this optional
 }
