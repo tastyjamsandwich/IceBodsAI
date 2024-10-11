@@ -4,7 +4,8 @@ const nextConfig = {
   experimental: {
     forceSwcTransforms: true,
   },
-  transpilePackages: ["@radix-ui/react-tabs"]
+  transpilePackages: ["@radix-ui/react-tabs"],
+  output: 'standalone',
 }
 
 module.exports = nextConfig
