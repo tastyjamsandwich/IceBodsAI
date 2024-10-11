@@ -1,7 +1,6 @@
 import React from 'react'
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Star } from 'lucide-react'
 
 interface ProductCardProps {
@@ -23,7 +22,7 @@ export function ProductCard({ name, description, price, rating, category, tier, 
       <CardContent className="p-4">
         <div className="flex justify-between items-start mb-2">
           <h3 className="text-lg font-bold">{name}</h3>
-          <Badge variant="secondary">{tier}</Badge>
+          <span className="text-sm font-medium bg-secondary text-secondary-foreground px-2 py-1 rounded">{tier}</span>
         </div>
         <p className="text-sm text-muted-foreground mb-2">{description}</p>
         <div className="flex justify-between items-center">
@@ -33,7 +32,7 @@ export function ProductCard({ name, description, price, rating, category, tier, 
             <span>{rating.toFixed(1)}</span>
           </div>
         </div>
-        <Badge variant="outline" className="mt-2">{category}</Badge>
+        <span className="inline-block mt-2 text-sm border border-primary text-primary px-2 py-1 rounded">{category}</span>
       </CardContent>
       <CardFooter>
         <Button className="w-full">Add to Cart</Button>
