@@ -7,8 +7,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
+    console.log('Initializing Prisma client...')
+    await prisma.$connect()
+
     console.log('Generating products...')
     const { count = 10 } = req.body
+
+    if (typeof count !== 'number' || count < 1 || count > 100) {
+      return res.status(400).json({ message: 'Invalid count. Must be a number between 1 and 100.' })
+    }
 
     const products = Array.from({ length: count }, () => ({
       name: `Product ${Math.random().toString(36).substring(7)}`,
@@ -31,7 +38,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.error('Error generating products:', error)
     res.status(500).json({ 
       message: 'Error generating products', 
-      error: error instanceof Error ? error.message : 'An unknown error occurred' 
+      error: error instanceof Error ? error.message : 'An unknown error occurred',
+      stack: error instanceof Error ? error.stack : undefined
     })
+  } finally {
+    await prisma.$disconnect()
   }
 }
