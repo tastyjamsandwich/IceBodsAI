@@ -1,60 +1,83 @@
-import React, { useEffect, useState } from 'react'
-import { ProductCard } from '../components/ProductCard'
-import Link from 'next/link'
+import { useState, useEffect } from 'react'
+import { Product } from '@prisma/client'
 import { Button } from "@/components/ui/button"
-
-interface Product {
-  id: string
-  name: string
-  description: string
-  price: number
-  rating: number
-  category: string
-  tier: string
-  image: string
-}
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([])
-  const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch('/api/products')
+        setLoading(true)
+        const response = await fetch('/api/products/bulk')
         if (!response.ok) {
-          throw new Error('Failed to fetch products')
+          const errorData = await response.json()
+          throw new Error(errorData.details || `HTTP error! status: ${response.status}`)
         }
         const data = await response.json()
         setProducts(data)
-        setIsLoading(false)
       } catch (error) {
         console.error('Error fetching products:', error)
-        setError('Failed to load products. Please try again later.')
-        setIsLoading(false)
+        setError(error instanceof Error ? error.message : 'An unknown error occurred')
+      } finally {
+        setLoading(false)
       }
     }
 
     fetchProducts()
   }, [])
 
-  if (isLoading) return <div className="flex justify-center items-center h-screen">Loading...</div>
-  if (error) return <div className="flex justify-center items-center h-screen text-red-500">{error}</div>
+  if (loading) {
+    return <div>Loading...</div>
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto p-4">
+        <h1 className="text-2xl font-bold mb-4">Error</h1>
+        <p className="text-red-500">{error}</p>
+        <p>Please try again later or contact support if the problem persists.</p>
+      </div>
+    )
+  }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-4xl font-bold text-gray-800">Ice Bods Product Showcase</h1>
-        <Link href="/back-office-login">
-          <Button className="bg-blue-500 hover:bg-blue-600 text-white">
-            Back Office
-          </Button>
-        </Link>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">IceBods Products</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {products.map((product) => (
-          <ProductCard key={product.id} {...product} />
+          <Card key={product.id}>
+            <CardHeader>
+              <CardTitle>{product.name}</CardTitle>
+              <CardDescription>{product.tier}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p>{product.description}</p>
+              <p className="font-bold mt-2">Price: ${product.price.toFixed(2)}</p>
+            </CardContent>
+            <CardFooter>
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="item-1">
+                  <AccordionTrigger>Show More</AccordionTrigger>
+                  <AccordionContent>
+                    <h4 className="font-semibold">Additional Info:</h4>
+                    <p>{product.additionalInfo}</p>
+                    <h4 className="font-semibold mt-2">Review:</h4>
+                    <p>{product.review}</p>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </CardFooter>
+          </Card>
         ))}
       </div>
     </div>
