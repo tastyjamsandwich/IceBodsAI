@@ -1,3 +1,4 @@
+import React from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -75,7 +76,7 @@ export default function Home() {
   )
 }
 
-function MountainIcon(props) {
+function MountainIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
       {...props}
