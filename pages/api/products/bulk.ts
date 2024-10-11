@@ -15,12 +15,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           name: product.name,
           description: product.description,
           price: parseFloat(product.price),
+          rating: parseInt(product.rating) || 0,
+          category: product.category,
           tier: product.tier,
+          image: product.image,
           additionalInfo: product.additionalInfo || '',
-          review: product.review || '',
-          rating: product.rating || 0,
-          category: product.category || 'Uncategorized',
-          image: product.image || 'https://via.placeholder.com/150'
+          review: product.review || ''
         })),
       })
 
