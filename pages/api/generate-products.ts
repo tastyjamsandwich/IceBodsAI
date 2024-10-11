@@ -1,48 +1,31 @@
-import { PrismaClient } from '@prisma/client'
-import type { NextApiRequest, NextApiResponse } from 'next'
-
-const prisma = new PrismaClient()
-
-function generateRandomProduct() {
-  const names = ['Ice Cream', 'Popsicle', 'Frozen Yogurt', 'Gelato', 'Sorbet', 'Ice Lolly', 'Frozen Custard', 'Sherbet']
-  const descriptions = ['Creamy and delicious', 'Refreshing treat', 'Smooth and flavorful', 'Rich and indulgent', 'Light and fruity']
-  const tiers = ['Basic', 'Premium', 'Deluxe', 'Ultimate']
-  const categories = ['Dairy', 'Fruit', 'Chocolate', 'Vanilla', 'Nut', 'Special']
-
-  return {
-    name: names[Math.floor(Math.random() * names.length)],
-    description: descriptions[Math.floor(Math.random() * descriptions.length)],
-    price: parseFloat((Math.random() * 10 + 1).toFixed(2)),
-    rating: Math.floor(Math.random() * 5) + 1,
-    category: categories[Math.floor(Math.random() * categories.length)],
-    tier: tiers[Math.floor(Math.random() * tiers.length)],
-    image: `https://picsum.photos/seed/${Math.random()}/200/300`,
-  }
-}
+import { NextApiRequest, NextApiResponse } from 'next'
+import prisma from '../../lib/prisma'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === 'POST') {
-    try {
-      const count = parseInt(req.body.count) || 10 // Default to 10 if not specified
+  if (req.method !== 'POST') {
+    return res.status(405).json({ message: 'Method not allowed' })
+  }
 
-      const products = []
-      for (let i = 0; i < count; i++) {
-        const product = generateRandomProduct()
-        const createdProduct = await prisma.product.create({
-          data: product,
-        })
-        products.push(createdProduct)
-      }
+  try {
+    const { count = 10 } = req.body
 
-      res.status(200).json({ message: `${count} products generated successfully`, products })
-    } catch (error) {
-      console.error('Error generating products:', error)
-      res.status(500).json({ message: 'Error generating products', error: (error as Error).message })
-    } finally {
-      await prisma.$disconnect()
-    }
-  } else {
-    res.setHeader('Allow', ['POST'])
-    res.status(405).end(`Method ${req.method} Not Allowed`)
+    const products = Array.from({ length: count }, () => ({
+      name: `Product ${Math.random().toString(36).substring(7)}`,
+      description: `Description for product ${Math.random().toString(36).substring(7)}`,
+      price: parseFloat((Math.random() * 100).toFixed(2)),
+      rating: Math.floor(Math.random() * 5) + 1,
+      category: ['Electronics', 'Clothing', 'Books', 'Home'][Math.floor(Math.random() * 4)],
+      tier: ['Basic', 'Premium', 'Luxury'][Math.floor(Math.random() * 3)],
+      image: `https://picsum.photos/200/300?random=${Math.random()}`,
+    }))
+
+    const createdProducts = await prisma.product.createMany({
+      data: products,
+    })
+
+    res.status(200).json({ message: `${createdProducts.count} products generated successfully` })
+  } catch (error) {
+    console.error('Error generating products:', error)
+    res.status(500).json({ message: 'Error generating products', error: error.message })
   }
 }
