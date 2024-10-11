@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
-import ExcelHandler from '../components/ExcelHandler'
+import { ExcelHandler } from '../components/ExcelHandler'
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
