@@ -17,7 +17,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           price: parseFloat(product.price),
           tier: product.tier,
           additionalInfo: product.additionalInfo || '',
-          review: product.review || ''
+          review: product.review || '',
+          rating: product.rating || 0,
+          category: product.category || 'Uncategorized',
+          image: product.image || 'https://via.placeholder.com/150'
         })),
       })
 
