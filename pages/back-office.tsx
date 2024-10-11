@@ -3,6 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Dialog,
   DialogContent,
@@ -20,6 +21,8 @@ interface Product {
   description: string
   price: number
   tier: string
+  additionalInfo: string
+  review: string
 }
 
 export default function BackOffice() {
@@ -45,7 +48,7 @@ export default function BackOffice() {
     }
   }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     if (editingProduct) {
       setEditingProduct({ ...editingProduct, [name]: value })
@@ -194,6 +197,30 @@ export default function BackOffice() {
                   id="tier"
                   name="tier"
                   value={editingProduct?.tier || newProduct.tier || ''}
+                  onChange={handleInputChange}
+                  className="col-span-3 text-black bg-white"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="additionalInfo" className="text-right">
+                  Additional Info
+                </Label>
+                <Textarea
+                  id="additionalInfo"
+                  name="additionalInfo"
+                  value={editingProduct?.additionalInfo || newProduct.additionalInfo || ''}
+                  onChange={handleInputChange}
+                  className="col-span-3 text-black bg-white"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="review" className="text-right">
+                  Review
+                </Label>
+                <Textarea
+                  id="review"
+                  name="review"
+                  value={editingProduct?.review || newProduct.review || ''}
                   onChange={handleInputChange}
                   className="col-span-3 text-black bg-white"
                 />
