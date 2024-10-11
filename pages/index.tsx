@@ -37,7 +37,7 @@ export default function Home() {
   }, [])
 
   if (loading) {
-    return <div>Loading...</div>
+    return <div className="container mx-auto p-4">Loading...</div>
   }
 
   if (error) {
