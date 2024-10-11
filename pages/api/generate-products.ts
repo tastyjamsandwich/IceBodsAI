@@ -7,9 +7,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    console.log('Initializing Prisma client...')
-    await prisma.$connect()
-
     console.log('Generating products...')
     const { count = 10 } = req.body
 
@@ -25,6 +22,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       category: ['Electronics', 'Clothing', 'Books', 'Home'][Math.floor(Math.random() * 4)],
       tier: ['Basic', 'Premium', 'Luxury'][Math.floor(Math.random() * 3)],
       image: `https://picsum.photos/200/300?random=${Math.random()}`,
+      additionalInfo: `Additional information about ${Math.random().toString(36).substring(7)}`,
+      review: `This product is ${['amazing', 'great', 'good', 'okay', 'disappointing'][Math.floor(Math.random() * 5)]}. ${Math.random().toString(36).substring(7)}`,
     }))
 
     console.log('Products generated, attempting to save to database...')
@@ -38,10 +37,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.error('Error generating products:', error)
     res.status(500).json({ 
       message: 'Error generating products', 
-      error: error instanceof Error ? error.message : 'An unknown error occurred',
-      stack: error instanceof Error ? error.stack : undefined
+      error: error instanceof Error ? error.message : 'An unknown error occurred' 
     })
-  } finally {
-    await prisma.$disconnect()
   }
 }
