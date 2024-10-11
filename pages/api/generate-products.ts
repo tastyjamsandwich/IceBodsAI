@@ -26,6 +26,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.status(200).json({ message: `${createdProducts.count} products generated successfully` })
   } catch (error) {
     console.error('Error generating products:', error)
-    res.status(500).json({ message: 'Error generating products', error: error.message })
+    res.status(500).json({ 
+      message: 'Error generating products', 
+      error: error instanceof Error ? error.message : 'An unknown error occurred' 
+    })
   }
 }
