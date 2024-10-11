@@ -6,6 +6,9 @@ const nextConfig = {
   },
   transpilePackages: ["@radix-ui/react-tabs"],
   output: 'standalone',
+  experimental: {
+    serverComponentsExternalPackages: ['@prisma/client', 'prisma'],
+  },
 }
 
 module.exports = nextConfig
