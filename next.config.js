@@ -3,7 +3,8 @@ const nextConfig = {
   reactStrictMode: true,
   experimental: {
     forceSwcTransforms: true,
-  }
+  },
+  transpilePackages: ["@radix-ui/react-tabs"]
 }
 
 module.exports = nextConfig
