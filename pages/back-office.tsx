@@ -158,7 +158,7 @@ export default function BackOffice() {
                   name="name"
                   value={editingProduct?.name || newProduct.name || ''}
                   onChange={handleInputChange}
-                  className="col-span-3"
+                  className="col-span-3 text-black bg-white"
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
@@ -170,7 +170,7 @@ export default function BackOffice() {
                   name="description"
                   value={editingProduct?.description || newProduct.description || ''}
                   onChange={handleInputChange}
-                  className="col-span-3"
+                  className="col-span-3 text-black bg-white"
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
@@ -183,7 +183,7 @@ export default function BackOffice() {
                   type="number"
                   value={editingProduct?.price || newProduct.price || ''}
                   onChange={handleInputChange}
-                  className="col-span-3"
+                  className="col-span-3 text-black bg-white"
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
@@ -195,7 +195,7 @@ export default function BackOffice() {
                   name="tier"
                   value={editingProduct?.tier || newProduct.tier || ''}
                   onChange={handleInputChange}
-                  className="col-span-3"
+                  className="col-span-3 text-black bg-white"
                 />
               </div>
             </div>
