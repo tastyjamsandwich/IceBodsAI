@@ -1,6 +1,5 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import {
   Dialog,
   DialogContent,
@@ -14,69 +13,52 @@ import * as XLSX from 'xlsx'
 interface Product {
   name: string;
   description: string;
-  price: string;
-  rating: string;
+  price: number;
+  rating: number;
   category: string;
   tier: string;
   image: string;
+  additionalInfo: string;
+  review: string;
 }
 
-export default function ExcelHandler() {
-  const [excelData, setExcelData] = useState<Product[]>([])
-  const [isUploading, setIsUploading] = useState(false)
-  const [uploadStatus, setUploadStatus] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+export function ExcelHandler() {
+  const [products, setProducts] = useState<Product[]>([])
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
     if (file) {
       const reader = new FileReader()
-      reader.onload = (e) => {
-        try {
-          const data = new Uint8Array(e.target?.result as ArrayBuffer)
-          const workbook = XLSX.read(data, { type: 'array' })
-          const sheetName = workbook.SheetNames[0]
-          const sheet = workbook.Sheets[sheetName]
-          const jsonData = XLSX.utils.sheet_to_json(sheet) as Product[]
-          setExcelData(jsonData)
-          setError(null)
-        } catch (err) {
-          console.error('Error parsing Excel file:', err)
-          setError('Failed to parse Excel file. Please check the file format.')
+      reader.onload = (evt) => {
+        if (evt.target) {
+          const bstr = evt.target.result
+          const wb = XLSX.read(bstr, { type: 'binary' })
+          const wsname = wb.SheetNames[0]
+          const ws = wb.Sheets[wsname]
+          const data = XLSX.utils.sheet_to_json(ws) as Product[]
+          setProducts(data)
         }
       }
-      reader.onerror = (err) => {
-        console.error('Error reading file:', err)
-        setError('Failed to read the file. Please try again.')
-      }
-      reader.readAsArrayBuffer(file)
+      reader.readAsBinaryString(file)
     }
   }
 
   const handleUpload = async () => {
-    setIsUploading(true)
-    setUploadStatus(null)
-    setError(null)
     try {
       const response = await fetch('/api/products/bulk', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ products: excelData }),
+        body: JSON.stringify({ products }),
       })
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || 'Failed to upload products')
+        throw new Error('Failed to upload products')
       }
-      const result = await response.json()
-      setUploadStatus(`Successfully uploaded ${result.count} products`)
-      setExcelData([])
+      alert('Products uploaded successfully!')
     } catch (error) {
       console.error('Error uploading products:', error)
-      setError(error instanceof Error ? error.message : 'An unknown error occurred')
-    } finally {
-      setIsUploading(false)
+      alert('Failed to upload products. Please try again.')
     }
   }
 
@@ -93,19 +75,10 @@ export default function ExcelHandler() {
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <Input
-            id="excel-file"
-            type="file"
-            accept=".xlsx, .xls"
-            onChange={handleFileUpload}
-          />
-          {excelData.length > 0 && (
-            <Button onClick={handleUpload} disabled={isUploading}>
-              {isUploading ? 'Uploading...' : 'Upload Products'}
-            </Button>
+          <input type="file" accept=".xlsx, .xls" onChange={handleFileUpload} />
+          {products.length > 0 && (
+            <Button onClick={handleUpload}>Upload {products.length} Products</Button>
           )}
-          {uploadStatus && <p className="text-green-600">{uploadStatus}</p>}
-          {error && <p className="text-red-600">{error}</p>}
         </div>
       </DialogContent>
     </Dialog>
