@@ -1,99 +1,95 @@
-import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
-
-interface Product {
-  id: string
-  name: string
-  description: string
-  price: number
-  rating: number
-  category: string
-  tier: string
-  image: string
-  additionalInfo: string
-  review: string
-}
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import Link from "next/link"
 
 export default function Home() {
-  const [products, setProducts] = useState<Product[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setLoading(true)
-        const response = await fetch('/api/products/bulk')
-        if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.details || `HTTP error! status: ${response.status}`)
-        }
-        const data = await response.json()
-        setProducts(data)
-      } catch (error) {
-        console.error('Error fetching products:', error)
-        setError(error instanceof Error ? error.message : 'An unknown error occurred')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchProducts()
-  }, [])
-
-  if (loading) {
-    return <div className="container mx-auto p-4">Loading...</div>
-  }
-
-  if (error) {
-    return (
-      <div className="container mx-auto p-4">
-        <h1 className="text-2xl font-bold mb-4">Error</h1>
-        <p className="text-red-500">{error}</p>
-        <p>Please try again later or contact support if the problem persists.</p>
-      </div>
-    )
-  }
-
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">IceBods Products</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {products.map((product) => (
-          <Card key={product.id}>
-            <CardHeader>
-              <CardTitle>{product.name}</CardTitle>
-              <CardDescription>{product.tier}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>{product.description}</p>
-              <p className="font-bold mt-2">Price: ${product.price.toFixed(2)}</p>
-              <p>Rating: {product.rating}/5</p>
-              <p>Category: {product.category}</p>
-            </CardContent>
-            <CardFooter>
-              <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="item-1">
-                  <AccordionTrigger>Show More</AccordionTrigger>
-                  <AccordionContent>
-                    <h4 className="font-semibold">Additional Info:</h4>
-                    <p>{product.additionalInfo}</p>
-                    <h4 className="font-semibold mt-2">Review:</h4>
-                    <p>{product.review}</p>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            </CardFooter>
-          </Card>
-        ))}
+    <div className="flex flex-col min-h-screen">
+      <header className="px-4 lg:px-6 h-14 flex items-center">
+        <Link className="flex items-center justify-center" href="#">
+          <MountainIcon className="h-6 w-6" />
+          <span className="sr-only">Acme Inc</span>
+        </Link>
+        <nav className="ml-auto flex gap-4 sm:gap-6">
+          <Link className="text-sm font-medium hover:underline underline-offset-4" href="#">
+            Features
+          </Link>
+          <Link className="text-sm font-medium hover:underline underline-offset-4" href="#">
+            Pricing
+          </Link>
+          <Link className="text-sm font-medium hover:underline underline-offset-4" href="#">
+            About
+          </Link>
+          <Link className="text-sm font-medium hover:underline underline-offset-4" href="#">
+            Contact
+          </Link>
+        </nav>
+      </header>
+      <main className="flex-1">
+        <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48">
+          <div className="container px-4 md:px-6">
+            <div className="flex flex-col items-center space-y-4 text-center">
+              <div className="space-y-2">
+                <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl/none">
+                  Welcome to IceBods
+                </h1>
+                <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl dark:text-gray-400">
+                  Discover the coolest ice cream flavors and create your perfect sundae.
+                </p>
+              </div>
+              <div className="space-x-4">
+                <Button>Get Started</Button>
+                <Button variant="outline">Learn More</Button>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section className="w-full py-12 md:py-24 lg:py-32 bg-gray-100 dark:bg-gray-800">
+          <div className="container px-4 md:px-6">
+            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">Our Flavors</h2>
+            <div className="grid gap-6 mt-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+              {/* Add flavor cards here */}
+            </div>
+          </div>
+        </section>
+      </main>
+      <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
+        <p className="text-xs text-gray-500 dark:text-gray-400">© 2024 IceBods Inc. All rights reserved.</p>
+        <nav className="sm:ml-auto flex gap-4 sm:gap-6">
+          <Link className="text-xs hover:underline underline-offset-4" href="#">
+            Terms of Service
+          </Link>
+          <Link className="text-xs hover:underline underline-offset-4" href="#">
+            Privacy
+          </Link>
+        </nav>
+      </footer>
+      {/* Add the back office button */}
+      <div className="fixed bottom-4 right-4">
+        <Link href="/admin">
+          <Button>Back Office</Button>
+        </Link>
       </div>
     </div>
+  )
+}
+
+function MountainIcon(props) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m8 3 4 8 5-5 5 15H2L8 3z" />
+    </svg>
   )
 }
