@@ -1,33 +1,45 @@
-import { useState, useEffect } from 'react'
-import { Product } from '@prisma/client'
+import React, { useEffect, useState } from 'react'
+import { ProductCard } from '../components/ProductCard'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
+
+interface Product {
+  id: string
+  name: string
+  description: string
+  price: number
+  rating: number
+  category: string
+  tier: string
+  image: string
+}
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch('/api/products')
+        if (!response.ok) {
+          throw new Error('Failed to fetch products')
+        }
+        const data = await response.json()
+        setProducts(data)
+        setIsLoading(false)
+      } catch (error) {
+        console.error('Error fetching products:', error)
+        setError('Failed to load products. Please try again later.')
+        setIsLoading(false)
+      }
+    }
+
     fetchProducts()
   }, [])
 
-  const fetchProducts = async () => {
-    try {
-      const response = await fetch('/api/products')
-      if (!response.ok) {
-        throw new Error('Failed to fetch products')
-      }
-      const data = await response.json()
-      setProducts(data)
-    } catch (error) {
-      console.error('Error fetching products:', error)
-      setError('Failed to fetch products. Please try again.')
-    }
-  }
-
   const generateProducts = async () => {
-    setIsLoading(true)
-    setError(null)
     try {
       const response = await fetch('/api/generate-products', {
         method: 'POST',
@@ -41,41 +53,46 @@ export default function Home() {
       }
       const data = await response.json()
       console.log(data.message)
-      await fetchProducts() // Refresh the product list
+      // Refetch products after generation
+      const productsResponse = await fetch('/api/products')
+      if (!productsResponse.ok) {
+        throw new Error('Failed to fetch products after generation')
+      }
+      const productsData = await productsResponse.json()
+      setProducts(productsData)
     } catch (error) {
       console.error('Error generating products:', error)
-      setError('Failed to generate products. Please try again.')
-    } finally {
-      setIsLoading(false)
+      setError('Failed to generate products. Please try again later.')
     }
   }
 
+  const tiers = ['Basic', 'Premium', 'Luxury']
+
+  if (isLoading) return <div>Loading...</div>
+  if (error) return <div>{error}</div>
+
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold mb-8">IceBods Products</h1>
-      <Button onClick={generateProducts} disabled={isLoading} className="mb-4">
-        {isLoading ? 'Generating...' : 'Generate Random Products'}
-      </Button>
-      {error && <p className="text-red-500 mb-4">{error}</p>}
-      {products.length === 0 ? (
-        <p>No products available. Generate some products to get started!</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {products.map((product) => (
-            <div key={product.id} className="border rounded-lg p-4 shadow-md">
-              <h2 className="text-xl font-semibold mb-2">{product.name}</h2>
-              <p className="text-gray-600 mb-2">{product.description}</p>
-              <p className="text-lg font-bold mb-2">${product.price.toFixed(2)}</p>
-              <p className="text-sm text-gray-500">Category: {product.category}</p>
-              <p className="text-sm text-gray-500">Tier: {product.tier}</p>
-              <p className="text-sm text-gray-500">Rating: {product.rating}/5</p>
-              {product.image && (
-                <img src={product.image} alt={product.name} className="mt-2 w-full h-40 object-cover rounded" />
-              )}
-            </div>
+      <h1 className="text-3xl font-bold mb-6">Ice Bods Product Showcase</h1>
+      <Button onClick={generateProducts} className="mb-4">Generate Products</Button>
+      <Tabs defaultValue="Basic">
+        <TabsList className="grid w-full grid-cols-3 mb-8">
+          {tiers.map((tier) => (
+            <TabsTrigger key={tier} value={tier}>{tier}</TabsTrigger>
           ))}
-        </div>
-      )}
+        </TabsList>
+        {tiers.map((tier) => (
+          <TabsContent key={tier} value={tier}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {products
+                .filter((product) => product.tier === tier)
+                .map((product) => (
+                  <ProductCard key={product.id} {...product} />
+                ))}
+            </div>
+          </TabsContent>
+        ))}
+      </Tabs>
     </div>
   )
 }
