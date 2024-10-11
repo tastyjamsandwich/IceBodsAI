@@ -8,12 +8,14 @@ generator client {
 }
 
 model Product {
-  id          String   @id @default(uuid())
-  name        String
-  description String
-  price       Float
-  rating      Int
-  category    String
-  tier        String
-  image       String
+  id             String   @id @default(uuid())
+  name           String
+  description    String
+  price          Float
+  rating         Int
+  category       String
+  tier           String
+  image          String
+  additionalInfo String
+  review         String
 }
