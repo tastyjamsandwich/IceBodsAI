@@ -7,10 +7,16 @@ import { ExcelHandler } from '../components/ExcelHandler'
 import ProductCard from '../components/ProductCard'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
+interface Product {
+  id: string;
+  category: string;
+  // Add other product properties here
+}
+
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<string[]>(['All']);
   const [selectedCategory, setSelectedCategory] = useState('All');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -24,7 +30,7 @@ export default function Home() {
       .then(response => response.json())
       .then(data => {
         setProducts(data);
-        const uniqueCategories = ['All', ...new Set(data.map((product: any) => product.category))];
+        const uniqueCategories = ['All', ...Array.from(new Set(data.map((product: Product) => product.category)))];
         setCategories(uniqueCategories);
       })
       .catch(error => console.error('Error fetching products:', error));
@@ -32,7 +38,7 @@ export default function Home() {
 
   const filteredProducts = selectedCategory === 'All' 
     ? products 
-    : products.filter((product: any) => product.category === selectedCategory);
+    : products.filter((product: Product) => product.category === selectedCategory);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
@@ -61,7 +67,7 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProducts.map((product: any) => (
+            {filteredProducts.map((product: Product) => (
               <ProductCard key={product.id} {...product} />
             ))}
           </div>
