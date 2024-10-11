@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { Product } from '@prisma/client'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -8,6 +7,19 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
+
+interface Product {
+  id: string
+  name: string
+  description: string
+  price: number
+  rating: number
+  category: string
+  tier: string
+  image: string
+  additionalInfo: string
+  review: string
+}
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([])
@@ -63,6 +75,8 @@ export default function Home() {
             <CardContent>
               <p>{product.description}</p>
               <p className="font-bold mt-2">Price: ${product.price.toFixed(2)}</p>
+              <p>Rating: {product.rating}/5</p>
+              <p>Category: {product.category}</p>
             </CardContent>
             <CardFooter>
               <Accordion type="single" collapsible className="w-full">
