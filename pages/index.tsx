@@ -73,7 +73,7 @@ export default function Home() {
           </select>
         </div>
 
-        <div  className="mb-4">
+        <div className="mb-4">
           <Label htmlFor="price-range">Price Range:</Label>
           <div className="flex items-center space-x-4">
             <Input
