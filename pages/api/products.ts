@@ -4,19 +4,25 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  console.log(`API route called: ${req.method} ${req.url}`)
-  console.log('Request body:', req.body)
+  if (process.env.DEBUG_MODE === 'true') {
+    console.log(`API route called: ${req.method} ${req.url}`)
+    console.log('Request body:', req.body)
+  }
 
   try {
     if (req.method === 'GET') {
       const products = await prisma.product.findMany()
-      console.log('Products fetched:', products.length)
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('Products fetched:', products.length)
+      }
       res.status(200).json(products)
     } else if (req.method === 'POST') {
       const product = await prisma.product.create({
         data: req.body,
       })
-      console.log('Product created:', product.id)
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('Product created:', product.id)
+      }
       res.status(201).json(product)
     } else if (req.method === 'PUT') {
       const { id, ...data } = req.body
@@ -24,10 +30,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         where: { id },
         data,
       })
-      console.log('Product updated:', updatedProduct.id)
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('Product updated:', updatedProduct.id)
+      }
       res.status(200).json(updatedProduct)
     } else {
-      console.log('Method not allowed:', req.method)
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('Method not allowed:', req.method)
+      }
       res.setHeader('Allow', ['GET', 'POST', 'PUT'])
       res.status(405).json({ error: `Method ${req.method} Not Allowed` })
     }
