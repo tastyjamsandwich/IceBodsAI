@@ -3,6 +3,7 @@ import { Star, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface ProductCardProps {
   id: string;
@@ -32,7 +33,7 @@ export default function ProductCard({
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div className="w-full max-w-sm mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+    <div className="w-full max-w-sm mx-auto bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
       <div className="p-4">
         <div className="flex justify-between items-start mb-2">
           <h2 className="text-xl font-bold text-gray-800">{name}</h2>
@@ -41,12 +42,21 @@ export default function ProductCard({
             <span className="text-sm font-semibold">{rating}/5.0</span>
           </div>
         </div>
-        <img className="h-48 w-full object-cover mb-4" src={image || "/placeholder.svg?height=192&width=192"} alt={name} />
+        <div className="relative h-48 w-full mb-4">
+          <Image
+            src={image || "/placeholder.svg?height=192&width=192"}
+            alt={name}
+            layout="fill"
+            objectFit="cover"
+          />
+        </div>
         <p className="text-gray-600 mb-2">{description}</p>
         <div className="flex justify-between items-center mb-4">
-          <span className="text-lg font-bold text-blue-600">£{price.toFixed(2)}</span>
+          <span className="text-lg font-bold text-blue-600">
+            {typeof price === 'number' ? `£${price.toFixed(2)}` : 'Price not available'}
+          </span>
           <Link href={`/product/${id}`}>
-            <Button className="bg-blue-500 hover:bg-blue-600 text-white">View Details</Button>
+            <Button className="bg-blue-500 hover:bg-blue-600 text-white transition-colors duration-300">View Details</Button>
           </Link>
         </div>
         <div className="text-sm text-gray-500 mb-2">
@@ -62,15 +72,15 @@ export default function ProductCard({
           {isExpanded ? <ChevronUp className="ml-2 h-4 w-4" /> : <ChevronDown className="ml-2 h-4 w-4" />}
         </Button>
         {isExpanded && (
-          <Tabs defaultValue="info" className="mt-4">
-            <TabsList className="w-full">
-              <TabsTrigger value="info" className="w-1/2">Quick Info</TabsTrigger>
-              <TabsTrigger value="review" className="w-1/2">Full Review</TabsTrigger>
+          <Tabs defaultValue="info" className="mt-4 space-y-4">
+            <TabsList className="w-full grid grid-cols-2 gap-2">
+              <TabsTrigger value="info" className="w-full">Quick Info</TabsTrigger>
+              <TabsTrigger value="review" className="w-full">Full Review</TabsTrigger>
             </TabsList>
-            <TabsContent value="info">
+            <TabsContent value="info" className="p-4 bg-gray-50 rounded-md">
               <p className="text-gray-600">{additionalInfo}</p>
             </TabsContent>
-            <TabsContent value="review">
+            <TabsContent value="review" className="p-4 bg-gray-50 rounded-md">
               <p className="text-gray-600">{review}</p>
             </TabsContent>
           </Tabs>
