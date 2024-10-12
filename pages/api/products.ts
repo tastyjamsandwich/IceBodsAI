@@ -22,8 +22,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.error('Error creating product:', error)
       res.status(500).json({ error: 'Failed to create product' })
     }
+  } else if (req.method === 'PUT') {
+    try {
+      const { id, ...data } = req.body
+      const updatedProduct = await prisma.product.update({
+        where: { id },
+        data,
+      })
+      res.status(200).json(updatedProduct)
+    } catch (error) {
+      console.error('Error updating product:', error)
+      res.status(500).json({ error: 'Failed to update product' })
+    }
   } else {
-    res.setHeader('Allow', ['GET', 'POST'])
+    res.setHeader('Allow', ['GET', 'POST', 'PUT'])
     res.status(405).end(`Method ${req.method} Not Allowed`)
   }
 }
