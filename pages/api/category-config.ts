@@ -4,9 +4,13 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  console.log(`API route called: ${req.method} ${req.url}`)
+  console.log('Request body:', req.body)
+
   try {
     if (req.method === 'GET') {
       const categoryConfigs = await prisma.categoryConfig.findMany()
+      console.log('Category configs fetched:', categoryConfigs.length)
       const configObject = categoryConfigs.reduce((acc, config) => {
         acc[config.category] = {
           maxProducts: config.maxProducts,
@@ -39,8 +43,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           })
         })
       )
+      console.log('Category configs updated:', updatedConfigs.length)
       res.status(200).json(updatedConfigs)
     } else {
+      console.log('Method not allowed:', req.method)
       res.setHeader('Allow', ['GET', 'POST'])
       res.status(405).json({ error: `Method ${req.method} Not Allowed` })
     }
