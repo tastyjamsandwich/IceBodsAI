@@ -1,8 +1,11 @@
-import React from 'react';
-import { Star } from 'lucide-react';
+import React, { useState } from 'react';
+import { Star, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from "@/components/ui/button"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import Link from 'next/link';
 
 interface ProductCardProps {
+  id: string;
   name: string;
   description: string;
   price: number;
@@ -15,6 +18,7 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ 
+  id,
   name, 
   description, 
   price, 
@@ -25,43 +29,52 @@ export default function ProductCard({
   additionalInfo, 
   review 
 }: ProductCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
   return (
-    <div className="w-full max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl m-4 border border-blue-200">
-      <div className="p-8">
-        <div className="flex justify-between items-start mb-4">
-          <h2 className="text-2xl font-bold text-gray-800">{name}</h2>
+    <div className="w-full max-w-sm mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+      <div className="p-4">
+        <div className="flex justify-between items-start mb-2">
+          <h2 className="text-xl font-bold text-gray-800">{name}</h2>
           <div className="flex items-center bg-yellow-100 px-2 py-1 rounded-full">
             <Star className="h-4 w-4 text-yellow-500 mr-1" />
             <span className="text-sm font-semibold">{rating}/5.0</span>
           </div>
         </div>
-        <div className="md:flex">
-          <div className="md:flex-shrink-0">
-            <img className="h-48 w-full object-cover md:w-48" src={image || "/placeholder.svg?height=192&width=192"} alt={name} />
-          </div>
-          <div className="mt-4 md:mt-0 md:ml-6">
-            <p className="mt-2 text-gray-600">{description}</p>
-            <div className="mt-4">
-              <span className="text-lg font-bold text-blue-600">£{price}</span>
-              <Button className="ml-4 bg-blue-500 hover:bg-blue-600 text-white">Buy Now</Button>
-            </div>
-            <div className="mt-4">
-              <p className="text-sm text-gray-500">Category: {category}</p>
-              <p className="text-sm text-gray-500">Tier: {tier}</p>
-            </div>
-          </div>
+        <img className="h-48 w-full object-cover mb-4" src={image || "/placeholder.svg?height=192&width=192"} alt={name} />
+        <p className="text-gray-600 mb-2">{description}</p>
+        <div className="flex justify-between items-center mb-4">
+          <span className="text-lg font-bold text-blue-600">£{price.toFixed(2)}</span>
+          <Link href={`/product/${id}`}>
+            <Button className="bg-blue-500 hover:bg-blue-600 text-white">View Details</Button>
+          </Link>
         </div>
-        <div className="mt-4">
-          <h3 className="text-lg font-semibold text-gray-800">Additional Info</h3>
-          <p className="text-gray-600">{additionalInfo}</p>
+        <div className="text-sm text-gray-500 mb-2">
+          <p>Category: {category}</p>
+          <p>Tier: {tier}</p>
         </div>
-        <div className="mt-4">
-          <h3 className="text-lg font-semibold text-gray-800">Review</h3>
-          <p className="text-gray-600">{review}</p>
-        </div>
-        <div className="mt-6">
-          <Button variant="outline" className="w-full text-blue-500 border-blue-500 hover:bg-blue-50">Show more +</Button>
-        </div>
+        <Button 
+          variant="outline" 
+          className="w-full text-blue-500 border-blue-500 hover:bg-blue-50 flex items-center justify-center"
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
+          {isExpanded ? 'Show less' : 'Show more'} 
+          {isExpanded ? <ChevronUp className="ml-2 h-4 w-4" /> : <ChevronDown className="ml-2 h-4 w-4" />}
+        </Button>
+        {isExpanded && (
+          <Tabs defaultValue="info" className="mt-4">
+            <TabsList className="w-full">
+              <TabsTrigger value="info" className="w-1/2">Quick Info</TabsTrigger>
+              <TabsTrigger value="review" className="w-1/2">Full Review</TabsTrigger>
+            </TabsList>
+            <TabsContent value="info">
+              <p className="text-gray-600">{additionalInfo}</p>
+            </TabsContent>
+            <TabsContent value="review">
+              <p className="text-gray-600">{review}</p>
+            </TabsContent>
+          </Tabs>
+        )}
       </div>
     </div>
   );
