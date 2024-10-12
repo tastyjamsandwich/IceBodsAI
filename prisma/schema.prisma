@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -26,9 +23,9 @@ model Product {
 }
 
 model CategoryConfig {
-  id          String @id @default(cuid())
-  category    String @unique
-  maxProducts Int    @default(10)
+  id          String   @id @default(cuid())
+  category    String   @unique
+  maxProducts Int      @default(10)
   minPrice    Float
   maxPrice    Float
   createdAt   DateTime @default(now())
