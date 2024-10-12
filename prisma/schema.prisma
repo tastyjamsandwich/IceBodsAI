@@ -1,14 +1,17 @@
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
 }
 
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
 model Product {
-  id             String  @id @default(uuid())
+  id             String   @id @default(uuid())
   name           String
   description    String
   price          Float
@@ -16,6 +19,18 @@ model Product {
   category       String
   tier           String
   image          String
-  additionalInfo String? // Make this optional
-  review         String? // Make this optional
+  additionalInfo String?
+  review         String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model CategoryConfig {
+  id          String @id @default(cuid())
+  category    String @unique
+  maxProducts Int    @default(10)
+  minPrice    Float
+  maxPrice    Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
