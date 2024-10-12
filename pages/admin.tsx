@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import Link from "next/link"
 
 interface Product {
@@ -17,37 +18,70 @@ interface Product {
   review: string;
 }
 
+interface CategoryConfig {
+  [category: string]: {
+    maxProducts: number;
+    priceRange: {
+      min: number;
+      max: number;
+    };
+  };
+}
+
 export default function AdminPage() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [newProduct, setNewProduct] = useState<Partial<Product>>({});
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [categoryConfig, setCategoryConfig] = useState<CategoryConfig>({});
 
   useEffect(() => {
     fetch('/api/products')
       .then(response => response.json())
       .then(data => setProducts(data))
       .catch(error => console.error('Error fetching products:', error));
+
+    fetch('/api/category-config')
+      .then(response => response.json())
+      .then(data => setCategoryConfig(data))
+      .catch(error => console.error('Error fetching category config:', error));
   }, []);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setNewProduct(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!editingProduct) return;
+
     try {
       const response = await fetch('/api/products', {
-        method: 'POST',
+        method: editingProduct.id ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newProduct),
+        body: JSON.stringify(editingProduct),
       });
       if (response.ok) {
-        const addedProduct = await response.json();
-        setProducts(prev => [...prev, addedProduct]);
-        setNewProduct({});
+        const updatedProduct = await response.json();
+        setProducts(prev => 
+          editingProduct.id 
+            ? prev.map(p => p.id === updatedProduct.id ? updatedProduct : p)
+            : [...prev, updatedProduct]
+        );
+        setEditingProduct(null);
       }
     } catch (error) {
-      console.error('Error adding product:', error);
+      console.error('Error saving product:', error);
+    }
+  };
+
+  const handleConfigSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('/api/category-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(categoryConfig),
+      });
+      if (response.ok) {
+        alert('Category configuration saved successfully');
+      }
+    } catch (error) {
+      console.error('Error saving category config:', error);
     }
   };
 
@@ -58,60 +92,103 @@ export default function AdminPage() {
         <Button className="mb-4">Back to Home</Button>
       </Link>
       
-      <form onSubmit={handleSubmit} className="mb-8 space-y-4">
-        <h2 className="text-xl font-semibold">Add New Product</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div>
-          <Label htmlFor="name">Name</Label>
-          <Input
-            id="name"
-            name="name"
-            value={newProduct.name || ''}
-            onChange={handleInputChange}
-            required
-          />
+          <h2 className="text-xl font-semibold mb-4">
+            {editingProduct?.id ? 'Edit Product' : 'Add New Product'}
+          </h2>
+          <form onSubmit={handleProductSubmit} className="space-y-4">
+            {['name', 'description', 'price', 'category', 'tier', 'rating', 'image', 'additionalInfo', 'review'].map((field) => (
+              <div key={field}>
+                <Label htmlFor={field}>{field.charAt(0).toUpperCase() + field.slice(1)}</Label>
+                {field === 'description' || field === 'additionalInfo' || field === 'review' ? (
+                  <Textarea
+                    id={field}
+                    name={field}
+                    value={editingProduct?.[field as keyof Product] || ''}
+                    onChange={(e) => setEditingProduct(prev => ({ ...prev!, [field]: e.target.value }))}
+                    required
+                  />
+                ) : (
+                  <Input
+                    id={field}
+                    name={field}
+                    type={field === 'price' || field === 'rating' ? 'number' : 'text'}
+                    value={editingProduct?.[field as keyof Product] || ''}
+                    onChange={(e) => setEditingProduct(prev => ({ ...prev!, [field]: e.target.value }))}
+                    required
+                  />
+                )}
+              </div>
+            ))}
+            <Button type="submit">{editingProduct?.id ? 'Update' : 'Add'} Product</Button>
+            {editingProduct?.id && (
+              <Button type="button" variant="outline" onClick={() => setEditingProduct(null)}>Cancel Edit</Button>
+            )}
+          </form>
         </div>
-        <div>
-          <Label htmlFor="description">Description</Label>
-          <Input
-            id="description"
-            name="description"
-            value={newProduct.description || ''}
-            onChange={handleInputChange}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="price">Price</Label>
-          <Input
-            id="price"
-            name="price"
-            type="number"
-            value={newProduct.price || ''}
-            onChange={handleInputChange}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="category">Category</Label>
-          <Input
-            id="category"
-            name="category"
-            value={newProduct.category || ''}
-            onChange={handleInputChange}
-            required
-          />
-        </div>
-        <Button type="submit">Add Product</Button>
-      </form>
 
-      <h2 className="text-xl font-semibold mb-4">Product List</h2>
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Category Configuration</h2>
+          <form onSubmit={handleConfigSubmit} className="space-y-4">
+            {Object.entries(categoryConfig).map(([category, config]) => (
+              <div key={category} className="border p-4 rounded">
+                <h3 className="font-semibold mb-2">{category}</h3>
+                <div className="space-y-2">
+                  <Label htmlFor={`${category}-max`}>Max Products</Label>
+                  <Input
+                    id={`${category}-max`}
+                    type="number"
+                    value={config.maxProducts}
+                    onChange={(e) => setCategoryConfig(prev => ({
+                      ...prev,
+                      [category]: { ...prev[category], maxProducts: parseInt(e.target.value) }
+                    }))}
+                  />
+                  <Label htmlFor={`${category}-min`}>Min Price</Label>
+                  <Input
+                    id={`${category}-min`}
+                    type="number"
+                    value={config.priceRange.min}
+                    onChange={(e) => setCategoryConfig(prev => ({
+                      ...prev,
+                      [category]: { 
+                        ...prev[category], 
+                        priceRange: { ...prev[category].priceRange, min: parseInt(e.target.value) }
+                      }
+                    }))}
+                  />
+                  <Label htmlFor={`${category}-max`}>Max Price</Label>
+                  <Input
+                    id={`${category}-max`}
+                    type="number"
+                    value={config.priceRange.max}
+                    onChange={(e) => setCategoryConfig(prev => ({
+                      ...prev,
+                      [category]: { 
+                        ...prev[category], 
+                        priceRange: { ...prev[category].priceRange, max: parseInt(e.target.value) }
+                      }
+                    }))}
+                  />
+                </div>
+              </div>
+            ))}
+            <Button type="submit">Save Category Configuration</Button>
+          </form>
+        </div>
+      </div>
+
+      <h2 className="text-xl font-semibold my-4">Product List</h2>
       <div className="space-y-4">
         {products.map(product => (
-          <div key={product.id} className="border p-4 rounded">
-            <h3 className="font-bold">{product.name}</h3>
-            <p>{product.description}</p>
-            <p>Price: £{product.price}</p>
-            <p>Category: {product.category}</p>
+          <div key={product.id} className="border p-4 rounded flex justify-between items-center">
+            <div>
+              <h3 className="font-semibold">{product.name}</h3>
+              <p>Price: £{product.price}</p>
+              <p>Category: {product.category}</p>
+            </div>
+            <Button onClick={() => setEditingProduct(product)}>Edit</Button>
           </div>
         ))}
       </div>
