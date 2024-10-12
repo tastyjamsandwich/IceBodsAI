@@ -10,5 +10,6 @@
     "env": {
       "PRISMA_GENERATE": "true"
     }
-  }
+  },
+  "buildCommand": "prisma generate && next build"
 }
