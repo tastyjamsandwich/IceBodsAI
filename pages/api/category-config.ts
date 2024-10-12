@@ -4,8 +4,8 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === 'GET') {
-    try {
+  try {
+    if (req.method === 'GET') {
       const categoryConfigs = await prisma.categoryConfig.findMany()
       const configObject = categoryConfigs.reduce((acc, config) => {
         acc[config.category] = {
@@ -18,12 +18,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return acc
       }, {} as Record<string, { maxProducts: number; priceRange: { min: number; max: number } }>)
       res.status(200).json(configObject)
-    } catch (error) {
-      console.error('Error fetching category configurations:', error)
-      res.status(500).json({ error: 'Failed to fetch category configurations' })
-    }
-  } else if (req.method === 'POST') {
-    try {
+    } else if (req.method === 'POST') {
       const configs = req.body
       const updatedConfigs = await Promise.all(
         Object.entries(configs).map(async ([category, config]) => {
@@ -45,12 +40,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         })
       )
       res.status(200).json(updatedConfigs)
-    } catch (error) {
-      console.error('Error updating category configurations:', error)
-      res.status(500).json({ error: 'Failed to update category configurations' })
+    } else {
+      res.setHeader('Allow', ['GET', 'POST'])
+      res.status(405).json({ error: `Method ${req.method} Not Allowed` })
     }
-  } else {
-    res.setHeader('Allow', ['GET', 'POST'])
-    res.status(405).end(`Method ${req.method} Not Allowed`)
+  } catch (error) {
+    console.error('API error:', error)
+    res.status(500).json({ error: 'Internal Server Error', details: error instanceof Error ? error.message : String(error) })
+  } finally {
+    await prisma.$disconnect()
   }
 }
