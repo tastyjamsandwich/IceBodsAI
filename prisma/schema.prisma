@@ -23,7 +23,7 @@ model Product {
 }
 
 model CategoryConfig {
-  id          String   @id @default(cuid())
+  id          String   @id @default(uuid())
   category    String   @unique
   maxProducts Int      @default(10)
   minPrice    Float
