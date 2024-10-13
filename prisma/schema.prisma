@@ -20,8 +20,8 @@ model Product {
   tier           String
   rating         Float
   image          String
-  additionalInfo String
-  review         String
+  additionalInfo String?  // Changed to optional
+  review         String?  // Changed to optional
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
