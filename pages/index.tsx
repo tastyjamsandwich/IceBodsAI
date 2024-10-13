@@ -33,17 +33,38 @@ export default function Home() {
   const [categoryConfig, setCategoryConfig] = useState<CategoryConfig>({});
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000000]);
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+
+  const fetchData = async () => {
+    try {
+      const [productsResponse, categoryConfigResponse] = await Promise.all([
+        fetch('/api/products'),
+        fetch('/api/category-config')
+      ]);
+      
+      if (productsResponse.ok && categoryConfigResponse.ok) {
+        const [productsData, categoryConfigData] = await Promise.all([
+          productsResponse.json(),
+          categoryConfigResponse.json()
+        ]);
+        
+        setProducts(productsData);
+        setCategoryConfig(categoryConfigData);
+        setLastUpdated(new Date());
+      } else {
+        console.error('Error fetching data');
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
 
   useEffect(() => {
-    fetch('/api/products')
-      .then(response => response.json())
-      .then(data => setProducts(data))
-      .catch(error => console.error('Error fetching products:', error));
-
-    fetch('/api/category-config')
-      .then(response => response.json())
-      .then(data => setCategoryConfig(data))
-      .catch(error => console.error('Error fetching category config:', error));
+    fetchData();
+    
+    const intervalId = setInterval(fetchData, 30000); // Refresh every 30 seconds
+    
+    return () => clearInterval(intervalId);
   }, []);
 
   const filteredProducts = products
@@ -115,8 +136,12 @@ export default function Home() {
         ))}
       </div>
 
-      <div className="mt-8">
-        <Link href="/admin">
+      <div className="mt-8 flex flex-col items-center">
+        <p className="text-sm text-gray-500 mb-2">
+          Last updated: {lastUpdated.toLocaleTimeString()}
+        </p>
+        <Button onClick={fetchData}>Refresh Products</Button>
+        <Link href="/admin" className="mt-4">
           <Button>Go to Admin Page</Button>
         </Link>
       </div>
