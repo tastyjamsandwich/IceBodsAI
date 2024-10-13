@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { toast } from "@/components/ui/use-toast"
 
 interface Product {
   id: string
@@ -23,6 +24,7 @@ interface Product {
   tier: string
   additionalInfo: string
   review: string
+  category: string
 }
 
 export default function BackOffice() {
@@ -44,7 +46,11 @@ export default function BackOffice() {
       setProducts(data)
     } catch (error) {
       console.error('Error fetching products:', error)
-      setError('Failed to load products. Please try again.')
+      toast({
+        title: "Error",
+        description: "Failed to load products. Please try again.",
+        variant: "destructive",
+      })
     }
   }
 
@@ -68,6 +74,12 @@ export default function BackOffice() {
           body: JSON.stringify(editingProduct),
         })
         if (!response.ok) throw new Error('Failed to update product')
+        const updatedProduct = await response.json()
+        setProducts(products.map(p => p.id === updatedProduct.id ? updatedProduct : p))
+        toast({
+          title: "Success",
+          description: "Product updated successfully.",
+        })
       } else {
         const response = await fetch('/api/products', {
           method: 'POST',
@@ -75,14 +87,24 @@ export default function BackOffice() {
           body: JSON.stringify(newProduct),
         })
         if (!response.ok) throw new Error('Failed to add product')
+        const addedProduct = await response.json()
+        setProducts([...products, addedProduct])
+        toast({
+          title: "Success",
+          description: "Product added successfully.",
+        })
       }
       setIsDialogOpen(false)
       setEditingProduct(null)
       setNewProduct({})
-      fetchProducts()
     } catch (error) {
       console.error('Error submitting product:', error)
       setError('Failed to save product. Please try again.')
+      toast({
+        title: "Error",
+        description: `Failed to ${editingProduct ? 'update' : 'add'} product. Please try again.`,
+        variant: "destructive",
+      })
     }
   }
 
@@ -95,10 +117,19 @@ export default function BackOffice() {
     try {
       const response = await fetch(`/api/products/${id}`, { method: 'DELETE' })
       if (!response.ok) throw new Error('Failed to delete product')
-      fetchProducts()
+      setProducts(products.filter(p => p.id !== id))
+      toast({
+        title: "Success",
+        description: "Product deleted successfully.",
+      })
     } catch (error) {
       console.error('Error deleting product:', error)
       setError('Failed to delete product. Please try again.')
+      toast({
+        title: "Error",
+        description: "Failed to delete product. Please try again.",
+        variant: "destructive",
+      })
     }
   }
 
@@ -121,6 +152,7 @@ export default function BackOffice() {
             <TableHead>Description</TableHead>
             <TableHead>Price</TableHead>
             <TableHead>Tier</TableHead>
+            <TableHead>Category</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -131,6 +163,7 @@ export default function BackOffice() {
               <TableCell>{product.description}</TableCell>
               <TableCell>${product.price.toFixed(2)}</TableCell>
               <TableCell>{product.tier}</TableCell>
+              <TableCell>{product.category}</TableCell>
               <TableCell>
                 <Button onClick={() => handleEdit(product)} className="mr-2 bg-blue-500 text-white hover:bg-blue-600">
                   Edit
@@ -152,79 +185,31 @@ export default function BackOffice() {
           </DialogHeader>
           <form onSubmit={handleSubmit}>
             <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
-                  Name
-                </Label>
-                <Input
-                  id="name"
-                  name="name"
-                  value={editingProduct?.name || newProduct.name || ''}
-                  onChange={handleInputChange}
-                  className="col-span-3 text-black bg-white"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="description" className="text-right">
-                  Description
-                </Label>
-                <Input
-                  id="description"
-                  name="description"
-                  value={editingProduct?.description || newProduct.description || ''}
-                  onChange={handleInputChange}
-                  className="col-span-3 text-black bg-white"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="price" className="text-right">
-                  Price
-                </Label>
-                <Input
-                  id="price"
-                  name="price"
-                  type="number"
-                  value={editingProduct?.price || newProduct.price || ''}
-                  onChange={handleInputChange}
-                  className="col-span-3 text-black bg-white"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="tier" className="text-right">
-                  Tier
-                </Label>
-                <Input
-                  id="tier"
-                  name="tier"
-                  value={editingProduct?.tier || newProduct.tier || ''}
-                  onChange={handleInputChange}
-                  className="col-span-3 text-black bg-white"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="additionalInfo" className="text-right">
-                  Additional Info
-                </Label>
-                <Textarea
-                  id="additionalInfo"
-                  name="additionalInfo"
-                  value={editingProduct?.additionalInfo || newProduct.additionalInfo || ''}
-                  onChange={handleInputChange}
-                  className="col-span-3 text-black bg-white"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="review" className="text-right">
-                  Review
-                </Label>
-                <Textarea
-                  id="review"
-                  name="review"
-                  value={editingProduct?.review || newProduct.review || ''}
-                  onChange={handleInputChange}
-                  className="col-span-3 text-black bg-white"
-                />
-              </div>
+              {['name', 'description', 'price', 'tier', 'category', 'additionalInfo', 'review'].map((field) => (
+                <div key={field} className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor={field} className="text-right">
+                    {field.charAt(0).toUpperCase() + field.slice(1)}
+                  </Label>
+                  {field === 'additionalInfo' || field === 'review' ? (
+                    <Textarea
+                      id={field}
+                      name={field}
+                      value={editingProduct?.[field as keyof Product] || newProduct[field as keyof Product] || ''}
+                      onChange={handleInputChange}
+                      className="col-span-3 text-black bg-white"
+                    />
+                  ) : (
+                    <Input
+                      id={field}
+                      name={field}
+                      type={field === 'price' ? 'number' : 'text'}
+                      value={editingProduct?.[field as keyof Product] || newProduct[field as keyof Product] || ''}
+                      onChange={handleInputChange}
+                      className="col-span-3 text-black bg-white"
+                    />
+                  )}
+                </div>
+              ))}
             </div>
             <DialogFooter>
               <Button type="submit">{editingProduct ? 'Update' : 'Add'} Product</Button>
