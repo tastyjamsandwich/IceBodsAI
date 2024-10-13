@@ -17,25 +17,47 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     switch (req.method) {
       case 'GET':
         const products = await prisma.product.findMany({
-          orderBy: { createdAt: 'desc' }
+          orderBy: { createdAt: 'desc' },
+          include: { category: true }
         })
         debugLog('Products fetched:', products.length)
         res.status(200).json(products)
         break
 
       case 'POST':
+        const { category: categoryName, ...productData } = req.body
+        const category = await prisma.category.findUnique({
+          where: { name: categoryName }
+        })
+        if (!category) {
+          return res.status(400).json({ error: 'Invalid category' })
+        }
         const product = await prisma.product.create({
-          data: req.body,
+          data: {
+            ...productData,
+            category: { connect: { id: category.id } }
+          },
+          include: { category: true }
         })
         debugLog('Product created:', product.id)
         res.status(201).json(product)
         break
 
       case 'PUT':
-        const { id, ...data } = req.body
+        const { id, category: updatedCategoryName, ...updatedData } = req.body
+        const updatedCategory = await prisma.category.findUnique({
+          where: { name: updatedCategoryName }
+        })
+        if (!updatedCategory) {
+          return res.status(400).json({ error: 'Invalid category' })
+        }
         const updatedProduct = await prisma.product.update({
           where: { id },
-          data,
+          data: {
+            ...updatedData,
+            category: { connect: { id: updatedCategory.id } }
+          },
+          include: { category: true }
         })
         debugLog('Product updated:', updatedProduct.id)
         res.status(200).json(updatedProduct)
