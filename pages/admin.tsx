@@ -33,16 +33,31 @@ export default function AdminPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [categoryConfig, setCategoryConfig] = useState<CategoryConfig>({});
 
-  useEffect(() => {
-    fetch('/api/products')
-      .then(response => response.json())
-      .then(data => setProducts(data))
-      .catch(error => console.error('Error fetching products:', error));
+  const fetchData = async () => {
+    try {
+      const [productsResponse, categoryConfigResponse] = await Promise.all([
+        fetch('/api/products'),
+        fetch('/api/category-config')
+      ]);
+      
+      if (productsResponse.ok && categoryConfigResponse.ok) {
+        const [productsData, categoryConfigData] = await Promise.all([
+          productsResponse.json(),
+          categoryConfigResponse.json()
+        ]);
+        
+        setProducts(productsData);
+        setCategoryConfig(categoryConfigData);
+      } else {
+        console.error('Error fetching data');
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
 
-    fetch('/api/category-config')
-      .then(response => response.json())
-      .then(data => setCategoryConfig(data))
-      .catch(error => console.error('Error fetching category config:', error));
+  useEffect(() => {
+    fetchData();
   }, []);
 
   const handleProductSubmit = async (e: React.FormEvent) => {
@@ -63,6 +78,7 @@ export default function AdminPage() {
             : [...prev, updatedProduct]
         );
         setEditingProduct(null);
+        fetchData(); // Refresh the product list
       }
     } catch (error) {
       console.error('Error saving product:', error);
@@ -79,6 +95,7 @@ export default function AdminPage() {
       });
       if (response.ok) {
         alert('Category configuration saved successfully');
+        fetchData(); // Refresh the category config
       }
     } catch (error) {
       console.error('Error saving category config:', error);
