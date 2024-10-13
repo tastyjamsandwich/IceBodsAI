@@ -1,145 +1,150 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { toast } from "@/components/ui/use-toast"
 import Link from 'next/link'
-
-// Basic toast implementation
-const Toast = ({ message, type }: { message: string; type: 'success' | 'error' }) => (
-  <div className={`fixed bottom-4 right-4 p-4 rounded-md ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white`}>
-    {message}
-  </div>
-)
+import ProductManagement from '../components/ProductManagement'
 
 interface Product {
-  id: string
-  name: string
-  description: string
-  price: number
-  category: string
-  tier: string
-  rating: number
-  image: string
-  additionalInfo: string
-  review: string
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  tier: string;
+  rating: number;
+  image: string;
+  additionalInfo: string;
+  review: string;
 }
 
 interface Category {
-  id: string
-  name: string
-  maxProducts: number
+  id: string;
+  name: string;
+  maxProducts: number;
   priceRange: {
-    min: number
-    max: number
-  }
+    min: number;
+    max: number;
+  };
 }
 
 export default function AdminPage() {
-  const [products, setProducts] = useState<Product[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
-  const [newProduct, setNewProduct] = useState<Partial<Product>>({})
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [newCategory, setNewCategory] = useState<Partial<Category>>({
     name: '',
     maxProducts: 10,
     priceRange: { min: 0, max: 1000 }
-  })
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null)
-  const [categoryConfig, setCategoryConfig] = useState<{[key: string]: Category}>({})
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+  });
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
   useEffect(() => {
-    fetchProducts()
-    fetchCategories()
-  }, [])
-
-  const showToast = (message: string, type: 'success' | 'error') => {
-    setToast({ message, type })
-    setTimeout(() => setToast(null), 3000)
-  }
+    fetchProducts();
+    fetchCategories();
+  }, []);
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch('/api/products')
-      if (!response.ok) throw new Error('Failed to fetch products')
-      const data = await response.json()
-      setProducts(data)
+      const response = await fetch('/api/products');
+      if (!response.ok) throw new Error('Failed to fetch products');
+      const data = await response.json();
+      setProducts(data);
     } catch (error) {
-      console.error('Error fetching products:', error)
-      showToast("Failed to load products", "error")
+      console.error('Error fetching products:', error);
+      toast({ title: "Error", description: "Failed to load products", variant: "destructive" });
     }
-  }
+  };
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('/api/categories')
-      if (!response.ok) throw new Error('Failed to fetch categories')
-      const data = await response.json()
-      setCategories(data)
-      const configObj = data.reduce((acc: {[key: string]: Category}, cat: Category) => {
-        acc[cat.name] = cat
-        return acc
-      }, {})
-      setCategoryConfig(configObj)
+      const response = await fetch('/api/categories');
+      if (!response.ok) throw new Error('Failed to fetch categories');
+      const data = await response.json();
+      setCategories(data);
     } catch (error) {
-      console.error('Error fetching categories:', error)
-      showToast("Failed to load categories", "error")
+      console.error('Error fetching categories:', error);
+      toast({ title: "Error", description: "Failed to load categories", variant: "destructive" });
     }
-  }
+  };
 
-  const handleProductSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleAddProduct = async (product: Partial<Product>) => {
     try {
       const response = await fetch('/api/products', {
-        method: editingProduct ? 'PUT' : 'POST',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingProduct || newProduct),
-      })
-      if (!response.ok) throw new Error('Failed to save product')
-      showToast(`Product ${editingProduct ? 'updated' : 'added'} successfully`, "success")
-      fetchProducts()
-      setEditingProduct(null)
-      setNewProduct({})
+        body: JSON.stringify(product),
+      });
+      if (!response.ok) throw new Error('Failed to add product');
+      toast({ title: "Success", description: "Product added successfully" });
+      fetchProducts();
     } catch (error) {
-      console.error('Error saving product:', error)
-      showToast("Failed to save product", "error")
+      console.error('Error adding product:', error);
+      toast({ title: "Error", description: "Failed to add product", variant: "destructive" });
     }
-  }
+  };
+
+  const handleUpdateProduct = async (product: Product) => {
+    try {
+      const response = await fetch(`/api/products/${product.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(product),
+      });
+      if (!response.ok) throw new Error('Failed to update product');
+      toast({ title: "Success", description: "Product updated successfully" });
+      fetchProducts();
+    } catch (error) {
+      console.error('Error updating product:', error);
+      toast({ title: "Error", description: "Failed to update product", variant: "destructive" });
+    }
+  };
+
+  const handleDeleteProduct = async (id: string) => {
+    try {
+      const response = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to delete product');
+      toast({ title: "Success", description: "Product deleted successfully" });
+      fetchProducts();
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      toast({ title: "Error", description: "Failed to delete product", variant: "destructive" });
+    }
+  };
 
   const handleCategorySubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     try {
       const response = await fetch('/api/categories', {
         method: editingCategory ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editingCategory || newCategory),
-      })
-      if (!response.ok) throw new Error('Failed to save category')
-      showToast(`Category ${editingCategory ? 'updated' : 'added'} successfully`, "success")
-      fetchCategories()
-      setEditingCategory(null)
-      setNewCategory({ name: '', maxProducts: 10, priceRange: { min: 0, max: 1000 } })
+      });
+      if (!response.ok) throw new Error('Failed to save category');
+      toast({ title: "Success", description: `Category ${editingCategory ? 'updated' : 'added'} successfully` });
+      fetchCategories();
+      setEditingCategory(null);
+      setNewCategory({ name: '', maxProducts: 10, priceRange: { min: 0, max: 1000 } });
     } catch (error) {
-      console.error('Error saving category:', error)
-      showToast("Failed to save category", "error")
+      console.error('Error saving category:', error);
+      toast({ title: "Error", description: "Failed to save category", variant: "destructive" });
     }
-  }
+  };
 
   const handleDeleteCategory = async (id: string) => {
     try {
-      const response = await fetch(`/api/categories/${id}`, { method: 'DELETE' })
-      if (!response.ok) throw new Error('Failed to delete category')
-      showToast("Category deleted successfully", "success")
-      fetchCategories()
+      const response = await fetch(`/api/categories/${id}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to delete category');
+      toast({ title: "Success", description: "Category deleted successfully" });
+      fetchCategories();
     } catch (error) {
-      console.error('Error deleting category:', error)
-      showToast("Failed to delete category", "error")
+      console.error('Error deleting category:', error);
+      toast({ title: "Error", description: "Failed to delete category", variant: "destructive" });
     }
-  }
+  };
 
   return (
     <div className="container mx-auto p-4">
@@ -150,101 +155,18 @@ export default function AdminPage() {
 
       <Tabs defaultValue="products" className="w-full">
         <TabsList className="mb-4">
-          <TabsTrigger value="products">Add/Edit Products</TabsTrigger>
-          <TabsTrigger value="categories">Category Configurations</TabsTrigger>
+          <TabsTrigger value="products">Manage Products</TabsTrigger>
+          <TabsTrigger value="categories">Manage Categories</TabsTrigger>
         </TabsList>
 
         <TabsContent value="products">
-          <Card>
-            <CardHeader>
-              <CardTitle>{editingProduct ? 'Edit Product' : 'Add New Product'}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleProductSubmit} className="space-y-4">
-                {['name', 'description', 'price', 'category', 'tier', 'rating', 'image', 'additionalInfo', 'review'].map((field) => (
-                  <div key={field} className="space-y-2">
-                    <Label htmlFor={field}>{field.charAt(0).toUpperCase() + field.slice(1)}</Label>
-                    {field === 'description' || field === 'additionalInfo' || field === 'review' ? (
-                      <Textarea
-                        id={field}
-                        name={field}
-                        value={editingProduct?.[field as keyof Product] || newProduct[field as keyof Product] || ''}
-                        onChange={(e) => editingProduct 
-                          ? setEditingProduct({...editingProduct, [field]: e.target.value})
-                          : setNewProduct({...newProduct, [field]: e.target.value})
-                        }
-                        required
-                      />
-                    ) : field === 'category' ? (
-                      <select
-                        id={field}
-                        name={field}
-                        value={editingProduct?.[field] || newProduct[field] || ''}
-                        onChange={(e) => editingProduct
-                          ? setEditingProduct({...editingProduct, [field]: e.target.value})
-                          : setNewProduct({...newProduct, [field]: e.target.value})
-                        }
-                        required
-                        className="w-full p-2 border rounded"
-                      >
-                        <option value="">Select a category</option>
-                        {categories.map((category) => (
-                          <option key={category.id} value={category.name}>{category.name}</option>
-                        ))}
-                      </select>
-                    ) : (
-                      <Input
-                        id={field}
-                        name={field}
-                        type={field === 'price' || field === 'rating' ? 'number' : 'text'}
-                        value={editingProduct?.[field as keyof Product] || newProduct[field as keyof Product] || ''}
-                        onChange={(e) => editingProduct
-                          ? setEditingProduct({...editingProduct, [field]: e.target.value})
-                          : setNewProduct({...newProduct, [field]: e.target.value})
-                        }
-                        required
-                      />
-                    )}
-                  </div>
-                ))}
-                <Button type="submit">{editingProduct ? 'Update' : 'Add'} Product</Button>
-                {editingProduct && (
-                  <Button type="button" variant="outline" onClick={() => setEditingProduct(null)}>Cancel Edit</Button>
-                )}
-              </form>
-            </CardContent>
-          </Card>
-
-          <Card className="mt-8">
-            <CardHeader>
-              <CardTitle>Product List</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Price</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {products.map((product) => (
-                    <TableRow key={product.id}>
-                      <TableCell>{product.name}</TableCell>
-                      <TableCell>{product.category}</TableCell>
-                      <TableCell>${product.price.toFixed(2)}</TableCell>
-                      <TableCell>
-                        <Button onClick={() => setEditingProduct(product)} className="mr-2">Edit</Button>
-                        <Button variant="destructive" onClick={() => {/* Implement delete functionality */}}>Delete</Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+          <ProductManagement
+            products={products}
+            categories={categories.map(c => c.name)}
+            onAddProduct={handleAddProduct}
+            onUpdateProduct={handleUpdateProduct}
+            onDeleteProduct={handleDeleteProduct}
+          />
         </TabsContent>
 
         <TabsContent value="categories">
@@ -336,7 +258,7 @@ export default function AdminPage() {
                     <TableRow key={category.id}>
                       <TableCell>{category.name}</TableCell>
                       <TableCell>{category.maxProducts}</TableCell>
-                      <TableCell>${category.priceRange.min} - ${category.priceRange.max}</TableCell>
+                      <TableCell>£{category.priceRange.min} - £{category.priceRange.max}</TableCell>
                       <TableCell>
                         <Button onClick={() => setEditingCategory(category)} className="mr-2">Edit</Button>
                         <Button variant="destructive" onClick={() => handleDeleteCategory(category.id)}>Delete</Button>
@@ -349,8 +271,6 @@ export default function AdminPage() {
           </Card>
         </TabsContent>
       </Tabs>
-
-      {toast && <Toast message={toast.message} type={toast.type} />}
     </div>
-  )
+  );
 }
