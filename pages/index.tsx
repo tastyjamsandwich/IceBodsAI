@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -67,10 +67,12 @@ export default function Home() {
     return () => clearInterval(intervalId);
   }, []);
 
-  const filteredProducts = products
-    .filter(product => selectedCategory === 'All' || product.category === selectedCategory)
-    .filter(product => product.price >= priceRange[0] && product.price <= priceRange[1])
-    .slice(0, categoryConfig[selectedCategory]?.maxProducts || 10);
+  const filteredProducts = useMemo(() => {
+    return products
+      .filter(product => selectedCategory === 'All' || product.category === selectedCategory)
+      .filter(product => product.price >= priceRange[0] && product.price <= priceRange[1])
+      .slice(0, categoryConfig[selectedCategory]?.maxProducts || 10);
+  }, [products, selectedCategory, priceRange, categoryConfig]);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
