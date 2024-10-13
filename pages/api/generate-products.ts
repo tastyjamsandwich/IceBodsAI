@@ -14,17 +14,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ message: 'Invalid count. Must be a number between 1 and 100.' })
     }
 
-    const products = Array.from({ length: count }, () => ({
-      name: `Product ${Math.random().toString(36).substring(7)}`,
-      description: `Description for product ${Math.random().toString(36).substring(7)}`,
-      price: parseFloat((Math.random() * 100).toFixed(2)),
-      rating: Math.floor(Math.random() * 5) + 1,
-      category: ['Electronics', 'Clothing', 'Books', 'Home'][Math.floor(Math.random() * 4)],
-      tier: ['Basic', 'Premium', 'Luxury'][Math.floor(Math.random() * 3)],
-      image: `https://picsum.photos/200/300?random=${Math.random()}`,
-      additionalInfo: `Additional information about ${Math.random().toString(36).substring(7)}`,
-      review: `This product is ${['amazing', 'great', 'good', 'okay', 'disappointing'][Math.floor(Math.random() * 5)]}. ${Math.random().toString(36).substring(7)}`,
-    }))
+    const categories = await prisma.category.findMany({
+      include: { priceRange: true }
+    })
+
+    if (categories.length === 0) {
+      return res.status(400).json({ message: 'No categories found. Please create categories first.' })
+    }
+
+    const products = Array.from({ length: count }, () => {
+      const category = categories[Math.floor(Math.random() * categories.length)]
+      const price = Math.random() * (category.priceRange.max - category.priceRange.min) + category.priceRange.min
+      
+      return {
+        name: `Product ${Math.random().toString(36).substring(7)}`,
+        description: `Description for product ${Math.random().toString(36).substring(7)}`,
+        price: parseFloat(price.toFixed(2)),
+        rating: Math.floor(Math.random() * 5) + 1,
+        category: category.name,
+        tier: ['Basic', 'Premium', 'Luxury'][Math.floor(Math.random() * 3)],
+        image: `https://picsum.photos/200/300?random=${Math.random()}`,
+        additionalInfo: `Additional information about ${Math.random().toString(36).substring(7)}`,
+        review: `This product is ${['amazing', 'great', 'good', 'okay', 'disappointing'][Math.floor(Math.random() * 5)]}. ${Math.random().toString(36).substring(7)}`,
+      }
+    })
 
     console.log('Products generated, attempting to save to database...')
     const createdProducts = await prisma.product.createMany({
