@@ -1,16 +1,21 @@
+
 import { NextApiRequest, NextApiResponse } from 'next'
 import { PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 
 const prisma = new PrismaClient()
 
-const CategoryConfigSchema = z.record(z.object({
+const CategorySchema = z.object({
+  id: z.string().optional(),
+  name: z.string(),
   maxProducts: z.number().int().positive(),
   priceRange: z.object({
     min: z.number().nonnegative(),
     max: z.number().positive(),
   }),
-}))
+})
+
+const CategoryConfigSchema = z.record(CategorySchema)
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (process.env.DEBUG_MODE === 'true') {
@@ -21,54 +26,68 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     switch (req.method) {
       case 'GET':
-        const categoryConfigs = await prisma.categoryConfig.findMany()
+        const categories = await prisma.category.findMany({
+          include: { priceRange: true }
+        })
         if (process.env.DEBUG_MODE === 'true') {
-          console.log('Category configs fetched:', categoryConfigs.length)
+          console.log('Categories fetched:', categories.length)
         }
-        const configObject = categoryConfigs.reduce((acc, config) => {
-          acc[config.category] = {
-            maxProducts: config.maxProducts,
-            priceRange: {
-              min: config.minPrice,
-              max: config.maxPrice,
-            },
-          }
-          return acc
-        }, {} as Record<string, { maxProducts: number; priceRange: { min: number; max: number } }>)
-        res.status(200).json(configObject)
+        res.status(200).json(categories)
         break
 
       case 'POST':
-        const validatedConfigs = CategoryConfigSchema.parse(req.body)
-        const updatedConfigs = await Promise.all(
-          Object.entries(validatedConfigs).map(async ([category, config]) => {
-            return prisma.categoryConfig.upsert({
-              where: { category },
-              update: {
-                maxProducts: config.maxProducts,
-                minPrice: config.priceRange.min,
-                maxPrice: config.priceRange.max,
-              },
-              create: {
-                category,
-                maxProducts: config.maxProducts,
-                minPrice: config.priceRange.min,
-                maxPrice: config.priceRange.max,
-              },
-            })
-          })
-        )
+        const newCategory = CategorySchema.parse(req.body)
+        const createdCategory = await prisma.category.create({
+          data: {
+            name: newCategory.name,
+            maxProducts: newCategory.maxProducts,
+            priceRange: {
+              create: newCategory.priceRange
+            }
+          },
+          include: { priceRange: true }
+        })
         if (process.env.DEBUG_MODE === 'true') {
-          console.log('Category configs updated:', updatedConfigs.length)
+          console.log('Category created:', createdCategory.id)
         }
-        res.status(200).json(updatedConfigs)
+        res.status(201).json(createdCategory)
+        break
+
+      case 'PUT':
+        const updatedCategory = CategorySchema.parse(req.body)
+        const updated = await prisma.category.update({
+          where: { id: updatedCategory.id },
+          data: {
+            name: updatedCategory.name,
+            maxProducts: updatedCategory.maxProducts,
+            priceRange: {
+              update: updatedCategory.priceRange
+            }
+          },
+          include: { priceRange: true }
+        })
+        if (process.env.DEBUG_MODE === 'true') {
+          console.log('Category updated:', updated.id)
+        }
+        res.status(200).json(updated)
+        break
+
+      case 'DELETE':
+        const { id } = req.query
+        await prisma.category.delete({
+          where: { id: id as string }
+        })
+        if (process.env.DEBUG_MODE === 'true') {
+          console.log('Category deleted:', id)
+        }
+        res.status(204).end()
         break
 
       default:
         if (process.env.DEBUG_MODE === 'true') {
           console.log('Method not allowed:', req.method)
         }
-        res.setHeader('Allow', ['GET', 'POST'])
+        res.setHeader('Allow', ['GET', 'POST', 'PUT', 'DELETE'])
         res.status(405).json({ error: `Method ${req.method} Not Allowed` })
     }
   } catch (error) {
