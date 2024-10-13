@@ -1,4 +1,3 @@
-
 import { NextApiRequest, NextApiResponse } from 'next'
 import { PrismaClient } from '@prisma/client'
 import { z } from 'zod'
@@ -9,10 +8,8 @@ const CategorySchema = z.object({
   id: z.string().optional(),
   name: z.string(),
   maxProducts: z.number().int().positive(),
-  priceRange: z.object({
-    min: z.number().nonnegative(),
-    max: z.number().positive(),
-  }),
+  minPrice: z.number().nonnegative(),
+  maxPrice: z.number().positive(),
 })
 
 const CategoryConfigSchema = z.record(CategorySchema)
@@ -26,31 +23,47 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     switch (req.method) {
       case 'GET':
-        const categories = await prisma.category.findMany({
-          include: { priceRange: true }
-        })
+        const categories = await prisma.category.findMany()
         if (process.env.DEBUG_MODE === 'true') {
           console.log('Categories fetched:', categories.length)
         }
-        res.status(200).json(categories)
+        const configObject = categories.reduce((acc, category) => {
+          acc[category.name] = {
+            id: category.id,
+            name: category.name,
+            maxProducts: category.maxProducts,
+            minPrice: category.minPrice,
+            maxPrice: category.maxPrice,
+          }
+          return acc
+        }, {} as Record<string, typeof CategorySchema._type>)
+        res.status(200).json(configObject)
         break
 
       case 'POST':
-        const newCategory = CategorySchema.parse(req.body)
-        const createdCategory = await prisma.category.create({
-          data: {
-            name: newCategory.name,
-            maxProducts: newCategory.maxProducts,
-            priceRange: {
-              create: newCategory.priceRange
-            }
-          },
-          include: { priceRange: true }
-        })
+        const validatedConfigs = CategoryConfigSchema.parse(req.body)
+        const updatedConfigs = await Promise.all(
+          Object.entries(validatedConfigs).map(async ([name, config]) => {
+            return prisma.category.upsert({
+              where: { name },
+              update: {
+                maxProducts: config.maxProducts,
+                minPrice: config.minPrice,
+                maxPrice: config.maxPrice,
+              },
+              create: {
+                name,
+                maxProducts: config.maxProducts,
+                minPrice: config.minPrice,
+                maxPrice: config.maxPrice,
+              },
+            })
+          })
+        )
         if (process.env.DEBUG_MODE === 'true') {
-          console.log('Category created:', createdCategory.id)
+          console.log('Categories updated:', updatedConfigs.length)
         }
-        res.status(201).json(createdCategory)
+        res.status(200).json(updatedConfigs)
         break
 
       case 'PUT':
@@ -60,11 +73,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           data: {
             name: updatedCategory.name,
             maxProducts: updatedCategory.maxProducts,
-            priceRange: {
-              update: updatedCategory.priceRange
-            }
+            minPrice: updatedCategory.minPrice,
+            maxPrice: updatedCategory.maxPrice,
           },
-          include: { priceRange: true }
         })
         if (process.env.DEBUG_MODE === 'true') {
           console.log('Category updated:', updated.id)
