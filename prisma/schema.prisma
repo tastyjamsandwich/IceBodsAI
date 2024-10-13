@@ -13,7 +13,8 @@ model Product {
   description    String
   price          Float
   rating         Int
-  category       String
+  category       Category @relation(fields: [categoryId], references: [id])
+  categoryId     String
   tier           String
   image          String
   additionalInfo String?
@@ -22,12 +23,13 @@ model Product {
   updatedAt      DateTime @updatedAt
 }
 
-model CategoryConfig {
+model Category {
   id          String   @id @default(uuid())
-  category    String   @unique
+  name        String   @unique
   maxProducts Int      @default(10)
   minPrice    Float
   maxPrice    Float
+  products    Product[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
