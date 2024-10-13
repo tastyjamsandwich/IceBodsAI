@@ -5,9 +5,15 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { toast } from "@/components/ui/use-toast"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from 'next/link'
+
+// Basic toast implementation
+const Toast = ({ message, type }: { message: string; type: 'success' | 'error' }) => (
+  <div className={`fixed bottom-4 right-4 p-4 rounded-md ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white`}>
+    {message}
+  </div>
+)
 
 interface Product {
   id: string
@@ -44,11 +50,17 @@ export default function AdminPage() {
   })
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [categoryConfig, setCategoryConfig] = useState<{[key: string]: Category}>({})
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
 
   useEffect(() => {
     fetchProducts()
     fetchCategories()
   }, [])
+
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({ message, type })
+    setTimeout(() => setToast(null), 3000)
+  }
 
   const fetchProducts = async () => {
     try {
@@ -58,7 +70,7 @@ export default function AdminPage() {
       setProducts(data)
     } catch (error) {
       console.error('Error fetching products:', error)
-      toast({ title: "Error", description: "Failed to load products", variant: "destructive" })
+      showToast("Failed to load products", "error")
     }
   }
 
@@ -75,7 +87,7 @@ export default function AdminPage() {
       setCategoryConfig(configObj)
     } catch (error) {
       console.error('Error fetching categories:', error)
-      toast({ title: "Error", description: "Failed to load categories", variant: "destructive" })
+      showToast("Failed to load categories", "error")
     }
   }
 
@@ -88,13 +100,13 @@ export default function AdminPage() {
         body: JSON.stringify(editingProduct || newProduct),
       })
       if (!response.ok) throw new Error('Failed to save product')
-      toast({ title: "Success", description: `Product ${editingProduct ? 'updated' : 'added'} successfully` })
+      showToast(`Product ${editingProduct ? 'updated' : 'added'} successfully`, "success")
       fetchProducts()
       setEditingProduct(null)
       setNewProduct({})
     } catch (error) {
       console.error('Error saving product:', error)
-      toast({ title: "Error", description: "Failed to save product", variant: "destructive" })
+      showToast("Failed to save product", "error")
     }
   }
 
@@ -107,13 +119,13 @@ export default function AdminPage() {
         body: JSON.stringify(editingCategory || newCategory),
       })
       if (!response.ok) throw new Error('Failed to save category')
-      toast({ title: "Success", description: `Category ${editingCategory ? 'updated' : 'added'} successfully` })
+      showToast(`Category ${editingCategory ? 'updated' : 'added'} successfully`, "success")
       fetchCategories()
       setEditingCategory(null)
       setNewCategory({ name: '', maxProducts: 10, priceRange: { min: 0, max: 1000 } })
     } catch (error) {
       console.error('Error saving category:', error)
-      toast({ title: "Error", description: "Failed to save category", variant: "destructive" })
+      showToast("Failed to save category", "error")
     }
   }
 
@@ -121,11 +133,11 @@ export default function AdminPage() {
     try {
       const response = await fetch(`/api/categories/${id}`, { method: 'DELETE' })
       if (!response.ok) throw new Error('Failed to delete category')
-      toast({ title: "Success", description: "Category deleted successfully" })
+      showToast("Category deleted successfully", "success")
       fetchCategories()
     } catch (error) {
       console.error('Error deleting category:', error)
-      toast({ title: "Error", description: "Failed to delete category", variant: "destructive" })
+      showToast("Failed to delete category", "error")
     }
   }
 
@@ -337,6 +349,8 @@ export default function AdminPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {toast && <Toast message={toast.message} type={toast.type} />}
     </div>
   )
 }
