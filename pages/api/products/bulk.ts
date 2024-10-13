@@ -1,5 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import prisma from '../../../lib/prisma'
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
@@ -11,16 +13,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       const createdProducts = await prisma.product.createMany({
-        data: products.map((product) => ({
+        data: products.map((product: any) => ({
           name: product.name,
           description: product.description,
           price: parseFloat(product.price),
-          rating: parseInt(product.rating) || 0,
-          category: product.category,
+          rating: parseFloat(product.rating) || 0,
+          categoryId: product.categoryId, // Make sure this field is included in the incoming data
           tier: product.tier,
           image: product.image,
-          additionalInfo: product.additionalInfo || '',
-          review: product.review || ''
+          additionalInfo: product.additionalInfo || null,
+          review: product.review || null
         })),
       })
 
@@ -35,7 +37,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   } else if (req.method === 'GET') {
     try {
-      const products = await prisma.product.findMany()
+      const products = await prisma.product.findMany({
+        include: { category: true }
+      })
       res.status(200).json(products)
     } catch (error) {
       console.error('Error fetching products:', error)
