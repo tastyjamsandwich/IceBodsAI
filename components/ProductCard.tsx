@@ -11,7 +11,11 @@ interface ProductCardProps {
   description: string;
   price: number;
   rating: number;
-  category: string;
+  category?: {
+    name: string;
+    minPrice?: number;
+    maxPrice?: number;
+  };
   tier: string;
   image: string;
   additionalInfo: string;
@@ -60,8 +64,11 @@ export default function ProductCard({
           </Link>
         </div>
         <div className="text-sm text-gray-500 mb-2">
-          <p>Category: {category}</p>
+          <p>Category: {category?.name || 'Uncategorized'}</p>
           <p>Tier: {tier}</p>
+          {category?.minPrice !== undefined && category?.maxPrice !== undefined && (
+            <p>Price Range: £{category.minPrice.toFixed(2)} - £{category.maxPrice.toFixed(2)}</p>
+          )}
         </div>
         <Button 
           variant="outline" 
